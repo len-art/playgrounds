@@ -1,42 +1,58 @@
 import React, { Component } from "react"
 
 import { firestore } from "./firebase"
-import updater from "./updater"
+import Update from "./update"
 
 import "./App.css"
 
 class App extends Component {
-  state = { counter: undefined }
+  constructor() {
+    super()
+    this.state = { loading: true, data: [] }
+    this.update = new Update()
+  }
   componentDidMount() {
     this.init()
   }
 
   init = async () => {
-    const data = await firestore
-      .collection("locations")
-      .doc("I2r3viL9OZ8nvHEo4kct")
-      .onSnapshot(this.handleSnapshot)
-    updater.start()
+    const docSnapshot = await firestore.collection("locations").get()
+    if (!docSnapshot.empty) {
+      this.listeners = docSnapshot.docs.map(async s => {
+        firestore
+          .collection("locations")
+          .doc(s.id)
+          .onSnapshot(snapshot => this.handleSnapshot(s.id, snapshot))
+        return s.id
+      })
+      this.setState({ loading: false })
+    }
+    const setupUpdate = this.update.init()
   }
 
-  handleSnapshot = snapshot => {
+  handleSnapshot = (id, snapshot) => {
     const { counter } = snapshot.data()
-    this.setState({ counter })
+    const { data } = this.state
+    this.setState({ data: { ...data, [id]: counter } })
   }
 
   stopUpdater = () => {
-    updater.stop()
+    this.update.stop()
   }
 
   render() {
-    const { counter } = this.state
-    console.log(counter !== undefined ? counter : "not yet defined")
+    const { loading, data } = this.state
+    console.log(data)
     return (
       <div className="App">
         <button onClick={this.stopUpdater}>stop updater</button>
-        <div>
-          counter value: {counter !== undefined ? counter : "not yet defined"}
-        </div>
+        {loading && <div>loading...</div>}
+        {!loading &&
+          Object.keys(data).map(id => (
+            <div>
+              {id}: {data[id]}
+            </div>
+          ))}
       </div>
     )
   }
