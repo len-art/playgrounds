@@ -30,7 +30,6 @@ class Updater {
     const docSnapshot = await firestore.collection("locations").get()
     if (!docSnapshot.empty) {
       this.documents = docSnapshot.docs.map(s => s.id)
-      this.start()
     }
   }
 
@@ -45,6 +44,7 @@ class Updater {
 
   start() {
     this.delayUpdateRandomDoc()
+    return true
   }
 
   stop() {

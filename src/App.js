@@ -8,8 +8,10 @@ import "./App.css"
 class App extends Component {
   constructor() {
     super()
-    this.state = { loading: true, data: [] }
+    this.state = { loading: true, updating: false, documents: [] }
     this.update = new Update()
+    this.listener = undefined
+    this.documents = []
   }
   componentDidMount() {
     this.init()
@@ -18,41 +20,70 @@ class App extends Component {
   init = async () => {
     const docSnapshot = await firestore.collection("locations").get()
     if (!docSnapshot.empty) {
-      this.listeners = docSnapshot.docs.map(async s => {
-        firestore
-          .collection("locations")
-          .doc(s.id)
-          .onSnapshot(snapshot => this.handleSnapshot(s.id, snapshot))
-        return s.id
+      const documents = docSnapshot.docs.map(s => ({
+        id: s.id,
+        value: undefined
+      }))
+      this.setState({
+        loading: false,
+        documents: documents.reduce(
+          (acc, v) => ({ ...acc, [v.id]: v.value }),
+          {}
+        )
       })
-      this.setState({ loading: false })
     }
-    const setupUpdate = this.update.init()
+    this.update.init()
+  }
+
+  subscribeTo = id => {
+    if (this.listener) this.listener()
+    this.listener = firestore
+      .collection("locations")
+      .doc(id)
+      .onSnapshot(snapshot => this.handleSnapshot(id, snapshot))
   }
 
   handleSnapshot = (id, snapshot) => {
     const { counter } = snapshot.data()
-    const { data } = this.state
-    this.setState({ data: { ...data, [id]: counter } })
+    this.setState(({ documents }) => ({
+      documents: { ...documents, [id]: counter }
+    }))
   }
 
-  stopUpdater = () => {
-    this.update.stop()
+  toggleUpdater = () => {
+    const hasCompleted = this.state.updating
+      ? this.update.stop()
+      : this.update.start()
+    if (hasCompleted) {
+      this.setState(prevState => ({ updating: !prevState.updating }))
+    }
   }
 
   render() {
-    const { loading, data } = this.state
-    console.log(data)
+    const { loading, data, updating, documents } = this.state
+    console.log(documents)
     return (
       <div className="App">
-        <button onClick={this.stopUpdater}>stop updater</button>
+        <div className="controls">
+          <button onClick={this.toggleUpdater}>
+            {updating ? "stop updater" : "start updater"}
+          </button>
+        </div>
         {loading && <div>loading...</div>}
         {!loading &&
-          Object.keys(data).map(id => (
-            <div>
-              {id}: {data[id]}
+          Object.keys(documents).map(id => (
+            <div key={id}>
+              <button onClick={() => this.subscribeTo(id)}>subscribe</button>
+              {id}:{" "}
+              {documents[id] !== undefined ? documents[id] : "no data yet"}
             </div>
           ))}
+        {/* {!loading &&
+          Object.keys(data).map(id => (
+            <div key={id}>
+              {id}: {data[id]}
+            </div>
+          ))} */}
       </div>
     )
   }
