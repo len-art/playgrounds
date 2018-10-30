@@ -46,7 +46,7 @@ class App extends Component {
   getSpecific = async id => {
     try {
       const data = await this.update.getSpecificDoc(id)
-      console.log(data)
+      console.log({ data })
     } catch (error) {}
   }
 
