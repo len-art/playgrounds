@@ -2,7 +2,7 @@ import React, { Component } from "react"
 
 import { firestore } from "./firebase"
 import Update from "./update"
-
+import NewMessage from "./newMessage"
 import "./App.css"
 
 class App extends Component {
@@ -49,21 +49,7 @@ class App extends Component {
     console.log(documents)
     return (
       <div className="App">
-        <button onClick={this.update.updateSpecificDoc}>update</button>
-        <div className="controls">
-          <button onClick={this.toggleUpdater}>
-            {updating ? "stop updater" : "start updater"}
-          </button>
-        </div>
-        {loading && <div>loading...</div>}
-        {!loading &&
-          Object.keys(documents).map(id => (
-            <div key={id}>
-              <button onClick={() => this.getSpecific(id)}>get</button>
-              {id}:{" "}
-              {documents[id] !== undefined ? documents[id] : "no data yet"}
-            </div>
-          ))}
+        <NewMessage />
       </div>
     )
   }
