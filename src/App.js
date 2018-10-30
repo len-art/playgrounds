@@ -43,6 +43,13 @@ class App extends Component {
       .onSnapshot(snapshot => this.handleSnapshot(id, snapshot))
   }
 
+  getSpecific = async id => {
+    try {
+      const data = await this.update.getSpecificDoc(id)
+      console.log(data)
+    } catch (error) {}
+  }
+
   handleSnapshot = (id, snapshot) => {
     const { counter } = snapshot.data()
     this.setState(({ documents }) => ({
@@ -74,6 +81,7 @@ class App extends Component {
           Object.keys(documents).map(id => (
             <div key={id}>
               <button onClick={() => this.subscribeTo(id)}>subscribe</button>
+              <button onClick={() => this.getSpecific(id)}>get</button>
               {id}:{" "}
               {documents[id] !== undefined ? documents[id] : "no data yet"}
             </div>
