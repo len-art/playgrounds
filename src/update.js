@@ -3,8 +3,8 @@ import { firestore } from "./firebase"
 class Updater {
   async getSpecificDoc(id) {
     const document = await firestore
-      .collection("locations")
-      .doc(id)
+      .collection("messages")
+      .doc("Lt1p6cIVbo7IHaqU57hO")
       .get()
     return document.data()
   }
