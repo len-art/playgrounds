@@ -8,10 +8,8 @@ import "./App.css"
 class App extends Component {
   constructor() {
     super()
-  this.state = { loading: true, updating: false, documents: {} }
+    this.state = { loading: true, updating: false, documents: {} }
     this.update = new Update()
-    this.listener = undefined
-    this.documents = []
   }
   componentDidMount() {
     this.init()
