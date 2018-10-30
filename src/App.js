@@ -1,7 +1,7 @@
 import React, { Component } from "react"
 
 import { firestore } from "./firebase"
-import Update from "./update"
+import Database from "./database"
 import NewMessage from "./newMessage"
 import "./App.css"
 
@@ -14,32 +14,12 @@ class App extends Component {
       documents: {},
       fetchedValue: undefined
     }
-    this.update = new Update()
-  }
-  componentDidMount() {
-    this.init()
-  }
-
-  init = async () => {
-    const docSnapshot = await firestore.collection("locations").get()
-    if (!docSnapshot.empty) {
-      const documents = docSnapshot.docs.map(s => ({
-        id: s.id,
-        value: undefined
-      }))
-      this.setState({
-        loading: false,
-        documents: documents.reduce(
-          (acc, v) => ({ ...acc, [v.id]: v.value }),
-          {}
-        )
-      })
-    }
+    this.database = new Database()
   }
 
   getSpecific = async id => {
     try {
-      const data = await this.update.getSpecificDoc(id)
+      const data = await this.database.getSpecificDoc(id)
       console.log(data)
     } catch (error) {}
   }
@@ -49,7 +29,7 @@ class App extends Component {
     console.log(documents)
     return (
       <div className="App">
-        <NewMessage />
+        <NewMessage database={this.database} />
       </div>
     )
   }
