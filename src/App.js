@@ -8,7 +8,7 @@ import "./App.css"
 class App extends Component {
   constructor() {
     super()
-    this.state = { loading: true, updating: false, documents: {} }
+  this.state = { loading: true, updating: false, documents: {}, fetchedValue: undefined }
     this.update = new Update()
   }
   componentDidMount() {
