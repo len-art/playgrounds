@@ -8,7 +8,7 @@ import "./App.css"
 class App extends Component {
   constructor() {
     super()
-    this.state = { loading: true, updating: false, documents: [] }
+  this.state = { loading: true, updating: false, documents: {} }
     this.update = new Update()
     this.listener = undefined
     this.documents = []
@@ -32,38 +32,13 @@ class App extends Component {
         )
       })
     }
-    this.update.init()
-  }
-
-  subscribeTo = id => {
-    if (this.listener) this.listener()
-    this.listener = firestore
-      .collection("locations")
-      .doc(id)
-      .onSnapshot(snapshot => this.handleSnapshot(id, snapshot))
   }
 
   getSpecific = async id => {
     try {
       const data = await this.update.getSpecificDoc(id)
-      console.log({ data })
+      console.log(data)
     } catch (error) {}
-  }
-
-  handleSnapshot = (id, snapshot) => {
-    const { counter } = snapshot.data()
-    this.setState(({ documents }) => ({
-      documents: { ...documents, [id]: counter }
-    }))
-  }
-
-  toggleUpdater = () => {
-    const hasCompleted = this.state.updating
-      ? this.update.stop()
-      : this.update.start()
-    if (hasCompleted) {
-      this.setState(prevState => ({ updating: !prevState.updating }))
-    }
   }
 
   render() {
@@ -80,18 +55,11 @@ class App extends Component {
         {!loading &&
           Object.keys(documents).map(id => (
             <div key={id}>
-              <button onClick={() => this.subscribeTo(id)}>subscribe</button>
               <button onClick={() => this.getSpecific(id)}>get</button>
               {id}:{" "}
               {documents[id] !== undefined ? documents[id] : "no data yet"}
             </div>
           ))}
-        {/* {!loading &&
-          Object.keys(data).map(id => (
-            <div key={id}>
-              {id}: {data[id]}
-            </div>
-          ))} */}
       </div>
     )
   }
