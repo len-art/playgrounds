@@ -8,7 +8,12 @@ import "./App.css"
 class App extends Component {
   constructor() {
     super()
-  this.state = { loading: true, updating: false, documents: {}, fetchedValue: undefined }
+    this.state = {
+      loading: true,
+      updating: false,
+      documents: {},
+      fetchedValue: undefined
+    }
     this.update = new Update()
   }
   componentDidMount() {
@@ -44,6 +49,7 @@ class App extends Component {
     console.log(documents)
     return (
       <div className="App">
+        <button onClick={this.update.updateSpecificDoc}>update</button>
         <div className="controls">
           <button onClick={this.toggleUpdater}>
             {updating ? "stop updater" : "start updater"}

@@ -9,6 +9,16 @@ class Updater {
     return document.data()
   }
 
+  async updateSpecificDoc(id) {
+    await firestore
+      .collection("messages")
+      .doc()
+      .set({
+        foo: "bar"
+      })
+    return true
+  }
+
   getRandomDocId = () =>
     this.documents.length &&
     this.documents[Math.floor(Math.random() * this.documents.length)]
