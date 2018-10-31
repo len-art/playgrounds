@@ -1,5 +1,5 @@
-import * as Firebase from "firebase"
-
+import Firebase from "firebase/app"
+import "firebase/firestore"
 const config = {
   apiKey: "AIzaSyBeUuMvQIJIkwLHYodTrEe9RYQLTQSCXlI",
   authDomain: "testing-povio.firebaseapp.com",
