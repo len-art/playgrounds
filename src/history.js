@@ -12,8 +12,12 @@ export default class History extends Component {
     return (
       <div>
         timeline:
-        {this.state.messages.map(message => (
-          <div>message:</div>
+        {this.state.messages.map((message, index) => (
+          <div key={index}>
+            <div>user: {message.username}</div>
+            <div>message: {message.message}</div>
+            <div>time: {message.ts.toDate().getDate()}</div>
+          </div>
         ))}
       </div>
     )
