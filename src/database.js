@@ -10,8 +10,7 @@ class Updater {
   }
 
   async getCollection(collection) {
-    // TODO: first argument should be the collection name, same as 'addToCollection'
-    const document = await firestore.collection("messasegrdges").get()
+    const document = await firestore.collection(collection).get()
     if (!document.empty) {
       return document.docs.map(doc => doc.data())
     }
