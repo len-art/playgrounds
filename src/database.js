@@ -18,6 +18,15 @@ class Updater {
     return []
   }
 
+  subscribeTo(collection, setListenerCallback, callback) {
+    const listener = firestore.collection(collection).onSnapshot(snapshot => {
+      if (!snapshot.empty) {
+        callback(snapshot.docs.map(doc => doc.data()))
+      }
+    })
+    if (setListenerCallback) setListenerCallback(listener)
+  }
+
   async addToCollection(collection, payload) {
     await firestore
       .collection(collection)
