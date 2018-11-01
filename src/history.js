@@ -1,12 +1,12 @@
 import React, { Component } from "react"
-
+import moment from "moment"
 import "./history.css"
 
 const DisplayMessage = props => {
   return (
     <div className="messageContainer">
       <div className="messageTimeStamp">
-        time: {props.message.ts.toDate().getDate()}
+        {moment(props.message.ts.toDate()).format("l kk:mm")}
       </div>
       <div className="messageUser">{props.message.username}:</div>
       <div className="messageContent">{props.message.message}</div>
