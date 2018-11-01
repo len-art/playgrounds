@@ -9,6 +9,18 @@ class Updater {
     return document.data()
   }
 
+  async deleteFromCollection(collection, id) {
+    try {
+      await firestore
+        .collection(collection)
+        .doc(id)
+        .delete()
+      return true
+    } catch (error) {
+      return false
+    }
+  }
+
   async getCollection(collection) {
     const document = await firestore.collection(collection).get()
     if (!document.empty) {
