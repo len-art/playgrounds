@@ -1,3 +1,8 @@
+.HistoryContainer {
+  display: flex;
+  flex-direction: column;
+}
+
 .messageContainer {
   display: flex;
   padding: 5px;
@@ -5,6 +10,10 @@
   border-radius: 10px;
   border: 1px solid #0000ff;
   width: fit-content;
+}
+.right {
+  align-self: flex-end;
+  background: rgba(95, 158, 160, 0.1);
 }
 
 .messageTimeStamp {

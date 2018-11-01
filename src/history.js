@@ -4,7 +4,13 @@ import "./history.css"
 
 const DisplayMessage = props => {
   return (
-    <div className="messageContainer">
+    <div
+      className={
+        props.message.username === props.username
+          ? "messageContainer right"
+          : "messageContainer"
+      }
+    >
       <div className="messageTimeStamp">
         {moment(props.message.ts.toDate()).format("l kk:mm")}
       </div>
@@ -25,7 +31,7 @@ export default class History extends Component {
   render() {
     console.log(this.state.messages)
     return (
-      <div>
+      <div className="HistoryContainer">
         {this.state.isLoading && (
           <div className="lds-ripple">
             <div />
@@ -34,7 +40,11 @@ export default class History extends Component {
         )}
 
         {this.state.messages.map((message, index) => (
-          <DisplayMessage message={message} key={index} />
+          <DisplayMessage
+            username={this.props.username}
+            message={message}
+            key={index}
+          />
         ))}
       </div>
     )
