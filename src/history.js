@@ -49,10 +49,12 @@ export default class History extends Component {
       </div>
     )
   }
-  fetchMessages = async () => {
+  getUpdates = messages => {
+    this.setState({ isLoading: false, messages: messages })
+  }
+  fetchMessages = () => {
     this.setState({ isLoading: true })
-    const history = await this.props.database.getCollection("messages")
-    this.setState({ messages: history, isLoading: false })
+    this.props.database.subscribeTo("messages", this.getUpdates)
   }
   componentDidMount() {
     this.fetchMessages()

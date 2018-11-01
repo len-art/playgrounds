@@ -29,7 +29,7 @@ class App extends Component {
       username: this.state.userName,
       ts: new Date()
     }
-    await this.props.database.addToCollection("messages", payload)
+    await this.database.addToCollection("messages", payload)
     this.setState({ isLoading: false, message: "" })
   }
   render() {
