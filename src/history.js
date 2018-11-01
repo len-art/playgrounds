@@ -5,11 +5,11 @@ import "./history.css"
 const DisplayMessage = props => {
   return (
     <div className="messageContainer">
-      <div>user: {props.message.username}</div>
-      <div>message: {props.message.message}</div>
       <div className="messageTimeStamp">
         time: {props.message.ts.toDate().getDate()}
       </div>
+      <div className="messageUser">{props.message.username}:</div>
+      <div className="messageContent">{props.message.message}</div>
     </div>
   )
 }

@@ -1,11 +1,21 @@
 .messageContainer {
   display: flex;
-  padding: 15px;
+  padding: 5px;
+  background: #5f9ea0;
+  border-radius: 10px;
+  border: 1px solid #0000ff;
 }
 
+.messageTimeStamp {
+  text-align: left;
+  padding: 10px 10px 0px 20px;
+  color: #000080;
+}
 .messageUser {
   text-align: left;
+  padding: 10px 5px 0px 5px;
 }
-.messageTimeStamp {
-  color: #888;
+.messageContent {
+  text-align: left;
+  padding: 10px 5px 0px 5px;
 }
