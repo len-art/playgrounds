@@ -1,9 +1,24 @@
 import React, { Component } from "react"
 
+import "./history.css"
+
+const DisplayMessage = props => {
+  return (
+    <div className="messageContainer">
+      <div>user: {props.message.username}</div>
+      <div>message: {props.message.message}</div>
+      <div className="messageTimeStamp">
+        time: {props.message.ts.toDate().getDate()}
+      </div>
+    </div>
+  )
+}
+
 export default class History extends Component {
   constructor(props) {
     super()
     this.state = {
+      isLoading: false,
       messages: []
     }
   }
@@ -11,20 +26,23 @@ export default class History extends Component {
     console.log(this.state.messages)
     return (
       <div>
-        timeline:
-        {this.state.messages.map((message, index) => (
-          <div key={index}>
-            <div>user: {message.username}</div>
-            <div>message: {message.message}</div>
-            <div>time: {message.ts.toDate().getDate()}</div>
+        {this.state.isLoading && (
+          <div className="lds-ripple">
+            <div />
+            <div />
           </div>
+        )}
+
+        {this.state.messages.map((message, index) => (
+          <DisplayMessage message={message} key={index} />
         ))}
       </div>
     )
   }
   fetchMessages = async () => {
+    this.setState({ isLoading: true })
     const history = await this.props.database.getCollection("messages")
-    this.setState({ messages: history })
+    this.setState({ messages: history, isLoading: false })
   }
   componentDidMount() {
     this.fetchMessages()

@@ -1,0 +1,11 @@
+.messageContainer {
+  display: flex;
+  padding: 15px;
+}
+
+.messageUser {
+  text-align: left;
+}
+.messageTimeStamp {
+  color: #888;
+}
