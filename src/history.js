@@ -12,7 +12,7 @@ const DisplayMessage = props => {
       }
     >
       <div className="messageTimeStamp">
-        {moment(props.message.ts.format("l kk:mm"))}
+        {moment(props.message.ts).format("l kk:mm")}
       </div>
       <div className="messageUser">{props.message.username}:</div>
       <div className="messageContent">{props.message.message}</div>
@@ -54,7 +54,9 @@ export default class History extends Component {
       ts: msg.ts.toDate()
     }))
     console.log("aggregatedMessages", aggregatedMessages)
-    // const sortedMessages = aggregatedMessages.sort((a, b) => b.ts - a.ts)
+    const sortedMessages = aggregatedMessages.sort(
+      (a, b) => b.ts.getTime() - a.ts.getTime()
+    )
     // console.log(messages)
     this.setState({ isLoading: false, messages: aggregatedMessages })
   }
