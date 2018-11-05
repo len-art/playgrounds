@@ -49,7 +49,7 @@ export default class History extends Component {
     )
   }
   getUpdates = messages => {
-    messages.sort((a, b) => b.ts - a.ts)
+    messages.sort((a, b) => b.ts.toDate() - a.ts.toDate())
     console.log(messages)
     this.setState({ isLoading: false, messages: messages })
   }
