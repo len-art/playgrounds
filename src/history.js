@@ -29,7 +29,6 @@ export default class History extends Component {
     }
   }
   render() {
-    console.log(this.state.messages)
     return (
       <div className="HistoryContainer">
         {this.state.isLoading && (
@@ -50,6 +49,8 @@ export default class History extends Component {
     )
   }
   getUpdates = messages => {
+    messages.sort((a, b) => b.ts - a.ts)
+    console.log(messages)
     this.setState({ isLoading: false, messages: messages })
   }
   fetchMessages = () => {
