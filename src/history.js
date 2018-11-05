@@ -49,8 +49,13 @@ export default class History extends Component {
     )
   }
   getUpdates = messages => {
-    messages.sort((a, b) => b.ts.toDate() - a.ts.toDate())
-    console.log(messages)
+    const aggregatedMessages = messages.map(msg => ({
+      ...msg,
+      ts: msg.ts.toDate()
+    }))
+    console.log("aggregatedMessages", aggregatedMessages)
+    // const sortedMessages = aggregatedMessages.sort((a, b) => b.ts - a.ts)
+    // console.log(messages)
     this.setState({ isLoading: false, messages: messages })
   }
   fetchMessages = () => {
