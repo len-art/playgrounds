@@ -17,15 +17,16 @@ export default class NewMessage extends Component {
   }
   componentDidMount() {
     console.log("componentDidMount")
-    window.addEventListener("keyup", this.enter)
+    window.addEventListener("keydown", this.enter)
   }
   componentWillUnmount() {
     console.log("componentWillUnmount")
-    window.removeEventListener("keyup", this.enter)
+    window.removeEventListener("keydown", this.enter)
   }
   enter = target => {
-    if (target.charCode === 13) {
-      // call handleSubmit???
+    console.log("keycode", target.keyCode)
+    if (target.keyCode === 13) {
+      this.props.handleSubmit()
     }
   }
   render() {
