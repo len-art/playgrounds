@@ -26,7 +26,7 @@ export default class NewMessage extends Component {
   enter = target => {
     console.log("keycode", target.keyCode)
     if (target.keyCode === 13) {
-      this.props.handleSubmit()
+      this.props.handlesubmit()
     }
   }
   render() {
