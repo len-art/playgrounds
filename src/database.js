@@ -30,11 +30,15 @@ class Updater {
   }
 
   subscribeTo(collection, callback) {
-    const listener = firestore.collection(collection).orderBy('ts', 'desc').limit(5).onSnapshot(snapshot => {
-      if (!snapshot.empty) {
-        callback(snapshot.docs.map(doc => doc.data()))
-      }
-    })
+    const listener = firestore
+      .collection(collection)
+      //.orderBy("ts", "desc")
+      //.limit(5)
+      .onSnapshot(snapshot => {
+        if (!snapshot.empty) {
+          callback(snapshot.docs.map(doc => doc.data()))
+        }
+      })
     return listener
   }
 

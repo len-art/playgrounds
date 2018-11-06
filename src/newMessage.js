@@ -2,6 +2,12 @@ import React, { Component } from "react"
 
 import "./newMessage.css"
 
+class Button extends Component {
+  render() {
+    return <button onClick={this.props.submit}>Submit</button>
+  }
+}
+
 export default class NewMessage extends Component {
   constructor(props) {
     super()
@@ -9,7 +15,19 @@ export default class NewMessage extends Component {
       isLoading: false
     }
   }
-
+  componentDidMount() {
+    console.log("componentDidMount")
+    window.addEventListener("keyup", this.enter)
+  }
+  componentWillUnmount() {
+    console.log("componentWillUnmount")
+    window.removeEventListener("keyup", this.enter)
+  }
+  enter = target => {
+    if (target.charCode === 13) {
+      // call handleSubmit???
+    }
+  }
   render() {
     console.log(this.state.isLoading)
     return (
@@ -38,7 +56,7 @@ export default class NewMessage extends Component {
                 <div />
               </div>
             ) : (
-              <button onClick={this.props.handlesubmit}>Submit</button>
+              <Button submit={this.props.handlesubmit} />
             )}
           </div>
         </div>

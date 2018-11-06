@@ -57,7 +57,7 @@ export default class History extends Component {
     const sortedMessages = aggregatedMessages.sort(
       (a, b) => b.ts.getTime() - a.ts.getTime()
     )
-    // console.log(messages)
+    console.log("sortedMessages", sortedMessages)
     this.setState({ isLoading: false, messages: aggregatedMessages })
   }
   fetchMessages = () => {
