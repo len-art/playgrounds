@@ -1,19 +1,27 @@
+.Container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+}
 .HistoryContainer {
   display: flex;
   flex-direction: column;
+  width: 600px;
 }
 
 .messageContainer {
   display: flex;
   padding: 5px;
+  margin: 1px 0px 1px 0px;
   background: #5f9ea0;
   border-radius: 10px;
-  border: 1px solid #0000ff;
+  border: 1px solid #006666;
   width: fit-content;
 }
 .right {
   align-self: flex-end;
   background: rgba(95, 158, 160, 0.1);
+  border: 1px solid #5f9ea0;
 }
 
 .messageTimeStamp {

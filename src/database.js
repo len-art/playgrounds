@@ -32,8 +32,8 @@ class Updater {
   subscribeTo(collection, callback) {
     const listener = firestore
       .collection(collection)
-      //.orderBy("ts", "desc")
-      //.limit(5)
+      .orderBy("ts", "desc")
+      .limit(10)
       .onSnapshot(snapshot => {
         if (!snapshot.empty) {
           callback(snapshot.docs.map(doc => doc.data()))

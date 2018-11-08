@@ -43,7 +43,6 @@ class App extends Component {
           handlemessagechange={this.handleMessageChange}
           handlesubmit={this.handleSubmit}
         />
-        <History database={this.database} username={this.state.userName} />
       </div>
     )
   }

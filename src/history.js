@@ -53,12 +53,12 @@ export default class History extends Component {
       ...msg,
       ts: msg.ts.toDate()
     }))
-    console.log("aggregatedMessages", aggregatedMessages)
-    const sortedMessages = aggregatedMessages.sort(
-      (a, b) => b.ts.getTime() - a.ts.getTime()
-    )
-    console.log("sortedMessages", sortedMessages)
-    this.setState({ isLoading: false, messages: aggregatedMessages })
+    // console.log("aggregatedMessages", aggregatedMessages)
+    // const sortedMessages = aggregatedMessages.sort(
+    //   (a, b) => b.ts.getTime() - a.ts.getTime()
+    // )
+    //console.log("sortedMessages", sortedMessages)
+    this.setState({ isLoading: false, messages: aggregatedMessages.reverse() })
   }
   fetchMessages = () => {
     this.setState({ isLoading: true })

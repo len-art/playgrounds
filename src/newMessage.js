@@ -2,11 +2,7 @@ import React, { Component } from "react"
 
 import "./newMessage.css"
 
-class Button extends Component {
-  render() {
-    return <button onClick={this.props.submit}>Submit</button>
-  }
-}
+import History from "./history"
 
 export default class NewMessage extends Component {
   constructor(props) {
@@ -16,49 +12,72 @@ export default class NewMessage extends Component {
     }
   }
   componentDidMount() {
-    console.log("componentDidMount")
     window.addEventListener("keydown", this.enter)
   }
   componentWillUnmount() {
-    console.log("componentWillUnmount")
     window.removeEventListener("keydown", this.enter)
   }
   enter = target => {
-    console.log("keycode", target.keyCode)
     if (target.keyCode === 13) {
       this.props.handlesubmit()
     }
   }
   render() {
     console.log(this.state.isLoading)
+    console.log(this.props.username)
     return (
-      <div>
-        <div>
-          Username:{" "}
+      <div className="Container">
+        <div className="users">
+          <button
+            className="button"
+            onClick={this.props.handleusernamechange}
+            value="Leon"
+          >
+            Leon
+          </button>
+          <button
+            className="button"
+            onClick={this.props.handleusernamechange}
+            value="Lenart"
+          >
+            Lenart
+          </button>
           <input
             type="text"
+            placeholder="Enter new user..."
             value={this.props.username}
             onChange={this.props.handleusernamechange}
           />
         </div>
         <div>
-          Message:{" "}
-          <input
-            type="text"
-            value={this.props.message}
-            onChange={this.props.handlemessagechange}
+          <History
+            database={this.props.database}
+            username={this.props.username}
           />
-        </div>
-        <div>
+          <div className="HistoryContainer">
+            <textarea
+              id="description"
+              rows="1"
+              cols="50"
+              placeholder="Type a message..."
+              className="textContainer"
+              name=""
+              type="text"
+              value={this.props.message}
+              onChange={this.props.handlemessagechange}
+            />
+          </div>
           <div>
-            {this.state.isLoading ? (
-              <div className="lds-ripple">
-                <div />
-                <div />
-              </div>
-            ) : (
-              <Button submit={this.props.handlesubmit} />
-            )}
+            <div>
+              {this.state.isLoading ? (
+                <div className="lds-ripple">
+                  <div />
+                  <div />
+                </div>
+              ) : (
+                <div>{""}</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
