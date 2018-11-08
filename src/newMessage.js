@@ -45,7 +45,6 @@ export default class NewMessage extends Component {
           <input
             type="text"
             placeholder="Enter new user..."
-            value={this.props.username}
             onChange={this.props.handleusernamechange}
           />
         </div>
