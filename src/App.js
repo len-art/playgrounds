@@ -16,6 +16,15 @@ class App extends Component {
       message: ""
     }
   }
+  async componentDidMount() {
+    console.log(
+      await this.database.doubleQueryEquals(
+        "messages",
+        { field: "message", value: "nov mesid" },
+        { field: "username", value: "leon" }
+      )
+    )
+  }
   handleUserNameChange = event => {
     this.setState({ userName: event.target.value })
   }

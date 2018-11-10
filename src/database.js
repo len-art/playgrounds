@@ -43,24 +43,21 @@ class Updater {
   }
 
   async doubleQueryEquals(
-    collestion,
-    queryField1,
-    queryValue1,
-    queryField2,
-    queryData2,
-    callback
+    collection,
+    { field: field1, value: value1 },
+    { field: field2, value: value2 }
   ) {
     try {
       const result = await firestore
         .collection(collection)
-        .where(queryField1 === queryValue1)
-        .where(queryField2 === queryValue2)
-        .where()
+        .where(field1, "==", value1)
+        .where(field2, "==", value2)
         .limit(1)
         .get()
       if (!result.empty) {
-        return result.data()
+        return result.docs[0].data()
       }
+      return undefined
     } catch (error) {
       console.error(error)
     }
