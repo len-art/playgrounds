@@ -17,10 +17,14 @@ class App extends Component {
     }
   }
   async componentDidMount() {
+    /* example of doubleQueryEquals
+      function takes 2 arguments:
+      database name and two objects for query
+      you can delete this */
     console.log(
       await this.database.doubleQueryEquals(
         "messages",
-        { field: "message", value: "nov mesid" },
+        { field: "message", value: "testing modify" },
         { field: "username", value: "leon" }
       )
     )
