@@ -33,13 +33,37 @@ class Updater {
     const listener = firestore
       .collection(collection)
       .orderBy("ts", "desc")
-      .limit(10)
+      .limit(5)
       .onSnapshot(snapshot => {
         if (!snapshot.empty) {
           callback(snapshot.docs.map(doc => doc.data()))
         }
       })
     return listener
+  }
+
+  async doubleQueryEquals(
+    collestion,
+    queryField1,
+    queryValue1,
+    queryField2,
+    queryData2,
+    callback
+  ) {
+    try {
+      const result = await firestore
+        .collection(collection)
+        .where(queryField1 === queryValue1)
+        .where(queryField2 === queryValue2)
+        .where()
+        .limit(1)
+        .get()
+      if (!result.empty) {
+        return result.data()
+      }
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   async addToCollection(collection, payload) {
