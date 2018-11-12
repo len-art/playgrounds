@@ -28,6 +28,11 @@ export default class NewMessage extends Component {
     return (
       <div className="Container">
         <div className="users">
+          <input
+            type="text"
+            placeholder="Enter new user..."
+            onChange={this.props.handleusernamechange}
+          />
           <button
             className="button"
             onClick={this.props.handleusernamechange}
@@ -42,11 +47,6 @@ export default class NewMessage extends Component {
           >
             Lenart
           </button>
-          <input
-            type="text"
-            placeholder="Enter new user..."
-            onChange={this.props.handleusernamechange}
-          />
         </div>
         <div>
           <History

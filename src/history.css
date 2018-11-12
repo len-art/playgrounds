@@ -13,23 +13,27 @@
   display: flex;
   padding: 5px;
   margin: 1px 0px 1px 0px;
-  background: #5f9ea0;
+  background: rgba(95, 158, 160, 0.6);
   border-radius: 10px;
-  border: 1px solid #006666;
+  border: 0px;
   width: fit-content;
 }
 .right {
   align-self: flex-end;
   background: rgba(95, 158, 160, 0.1);
-  border: 1px solid #5f9ea0;
+  border: 0px;
 }
 
 .messageTimeStamp {
   text-align: left;
   padding: 0px 10px 0px 5px;
-  color: #000080;
+  color: #808080;
   font-size: 11px;
 }
+.messageRight {
+  color: ##696969;
+}
+
 .messageUser {
   text-align: left;
   padding: 10px 5px 0px 5px;

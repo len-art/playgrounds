@@ -3,6 +3,32 @@ import moment from "moment"
 import "./history.css"
 
 const DisplayMessage = props => {
+  console.log("start of day")
+  console.log(
+    moment()
+      .startOf("day")
+      .toDate()
+  )
+  console.log(moment(props.message.ts).toDate())
+  const Date = () => {
+    if (
+      moment(props.message.ts).toDate() >
+      moment()
+        .startOf("day")
+        .toDate()
+    ) {
+      return moment(props.message.ts).format("HH:mm")
+    } else if (
+      moment(props.message.ts).toDate() >
+      moment()
+        .startOf("Year")
+        .toDate()
+    ) {
+      return moment(props.message.ts).format("d. MMMM, HH:mm")
+    } else {
+      return moment(props.message.ts).format("d. MMMM YYYY, HH:mm")
+    }
+  }
   return (
     <div
       className={
@@ -11,8 +37,14 @@ const DisplayMessage = props => {
           : "messageContainer"
       }
     >
-      <div className="messageTimeStamp">
-        {moment(props.message.ts).format("l kk:mm")}
+      <div
+        className={
+          props.message.username === props.username
+            ? "messageTimeStamp messageRight"
+            : "messageTimeStamp"
+        }
+      >
+        {Date()}
       </div>
       <div className="messageUser">{props.message.username}:</div>
       <div className="messageContent">{props.message.message}</div>
