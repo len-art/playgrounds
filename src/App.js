@@ -56,7 +56,7 @@ class App extends Component {
     const regload = {
       username: this.state.userName,
       password: this.state.password,
-      ts: new Date()
+      ts: new Date() // change this field to "signedInOn"
     }
     await this.database.addToCollection("users", regload)
   }
