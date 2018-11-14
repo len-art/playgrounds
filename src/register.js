@@ -18,9 +18,9 @@ export default class Register extends Component {
         <input
           type="password"
           placeholder="Enter password"
-          onChange={this.props.handlePassword}
+          onChange={this.props.handlepassword}
         />
-        <button className="button" onClick={this.props.handleRegSubmit}>
+        <button className="button" onClick={this.props.handleregsubmit}>
           confirm
         </button>
       </div>

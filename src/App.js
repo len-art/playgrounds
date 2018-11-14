@@ -19,19 +19,19 @@ class App extends Component {
       isLogedIn: false
     }
   }
-  async componentDidMount() {
-    /* example of doubleQueryEquals
-      function takes 2 arguments:
-      database name and two objects for query
-      you can delete this */
-    // console.log(
-    //   await this.database.doubleQueryEquals(
-    //     "messages",
-    //     { field: "message", value: "testing modify" },
-    //     { field: "username", value: "leon" }
-    //   )
-    // )
-  }
+  // /async componentDidMount() {
+  //   /* example of doubleQueryEquals
+  //     function takes 2 arguments:
+  //     database name and two objects for query
+  //     you can delete this */
+  //   // console.log(
+  //   //   await this.database.doubleQueryEquals(
+  //   //     "messages",
+  //   //     { field: "message", value: "testing modify" },
+  //   //     { field: "username", value: "leon" }
+  //   //   )
+  //   // )
+  // }
   handleUserNameChange = event => {
     this.setState({ userName: event.target.value })
   }
@@ -74,7 +74,11 @@ class App extends Component {
             handlesubmit={this.handleSubmit}
           />
         ) : (
-          <Register handleusernamechange={this.handleUserNameChange} />
+          <Register
+            handleusernamechange={this.handleUserNameChange}
+            handlepassword={this.handlePassword}
+            handleregsubmit={this.handleRegSubmit}
+          />
         )}
       </div>
     )
