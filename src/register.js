@@ -1,14 +1,12 @@
 import React, { Component } from "react"
 
-export default class Login extends Component {
+export default class Register extends Component {
   constructor(props) {
     super()
-    this.state = {
-      isLogedIn: true
-    }
+    this.state = {}
   }
   render() {
-    console.log("isLogedIn", this.state.isLogedIn)
+    // console.log("isLogedIn", this.state.isLogedIn)
     return (
       <div>
         <div>please login</div>
@@ -18,11 +16,11 @@ export default class Login extends Component {
           onChange={this.props.handleusernamechange}
         />
         <input
-          type="text"
+          type="password"
           placeholder="Enter password"
-          onChange={this.props.handleusernamechange}
+          onChange={this.props.handlePassword}
         />
-        <button className="button" onClick={this.props.handleusernamechange}>
+        <button className="button" onClick={this.props.handleRegSubmit}>
           confirm
         </button>
       </div>

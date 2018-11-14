@@ -4,7 +4,7 @@ import { firestore } from "./firebase"
 import Database from "./database"
 import NewMessage from "./newMessage"
 import History from "./history"
-import Login from "./login"
+import Register from "./register"
 
 import "./App.css"
 
@@ -14,6 +14,7 @@ class App extends Component {
     this.database = new Database()
     this.state = {
       userName: "",
+      password: "",
       message: "",
       isLogedIn: false
     }
@@ -23,19 +24,22 @@ class App extends Component {
       function takes 2 arguments:
       database name and two objects for query
       you can delete this */
-    console.log(
-      await this.database.doubleQueryEquals(
-        "messages",
-        { field: "message", value: "testing modify" },
-        { field: "username", value: "leon" }
-      )
-    )
+    // console.log(
+    //   await this.database.doubleQueryEquals(
+    //     "messages",
+    //     { field: "message", value: "testing modify" },
+    //     { field: "username", value: "leon" }
+    //   )
+    // )
   }
   handleUserNameChange = event => {
     this.setState({ userName: event.target.value })
   }
   handleMessageChange = event => {
     this.setState({ message: event.target.value })
+  }
+  handlePassword = event => {
+    this.setState({ password: event.target.value })
   }
   handleSubmit = async () => {
     this.setState({ isLoading: true })
@@ -46,6 +50,15 @@ class App extends Component {
     }
     await this.database.addToCollection("messages", payload)
     this.setState({ isLoading: false, message: "" })
+  }
+  handleRegSubmit = async () => {
+    this.setState({ isLogedIn: true })
+    const regload = {
+      username: this.state.userName,
+      password: this.state.password,
+      ts: new Date()
+    }
+    await this.database.addToCollection("users", regload)
   }
 
   render() {
@@ -61,7 +74,7 @@ class App extends Component {
             handlesubmit={this.handleSubmit}
           />
         ) : (
-          <Login />
+          <Register handleusernamechange={this.handleUserNameChange} />
         )}
       </div>
     )
