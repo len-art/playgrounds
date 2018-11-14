@@ -4,7 +4,7 @@ import { firestore } from "./firebase"
 import Database from "./database"
 import NewMessage from "./newMessage"
 import History from "./history"
-import Register from "./register"
+import Authentication from "./authentication"
 
 import "./App.css"
 
@@ -56,7 +56,7 @@ class App extends Component {
     const payload = {
       username: this.state.userName,
       password: this.state.password,
-      ts: new Date() // change this field to "registeredOn"
+      registeredOn: new Date() // change this field to "registeredOn"
     }
     await this.database.addToCollection("users", payload)
   }
@@ -74,7 +74,7 @@ class App extends Component {
             handlesubmit={this.handleSubmit}
           />
         ) : (
-          <Register
+          <Authentication
             handleusernamechange={this.handleUserNameChange}
             handlepassword={this.handlePassword}
             handleregsubmit={this.handleRegSubmit}
