@@ -1,5 +1,14 @@
 import React, { Component } from "react"
 
+/*
+  Parent component should be a class component with state
+  it should allow toggling between Login and Register
+  its render should look something like this:
+  {
+    this.state.isRegistering ? <Register {...this.props} /> : <Login {...this.props} />
+  }
+  */
+
 export default class Register extends Component {
   constructor(props) {
     super()
