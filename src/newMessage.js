@@ -27,27 +27,6 @@ export default class NewMessage extends Component {
     console.log(this.props.username)
     return (
       <div className="Container">
-        <div className="users">
-          <input
-            type="text"
-            placeholder="Enter new user..."
-            onChange={this.props.handleusernamechange}
-          />
-          <button
-            className="button"
-            onClick={this.props.handleusernamechange}
-            value="Leon"
-          >
-            Leon
-          </button>
-          <button
-            className="button"
-            onClick={this.props.handleusernamechange}
-            value="Lenart"
-          >
-            Lenart
-          </button>
-        </div>
         <div>
           <History
             database={this.props.database}

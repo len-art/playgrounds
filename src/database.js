@@ -48,6 +48,8 @@ class Updater {
     return listener
   }
 
+  async doesUsernameExist() {}
+
   async doubleQueryEquals(
     collection,
     { field: field1, value: value1 },
@@ -68,6 +70,7 @@ class Updater {
       return undefined
     } catch (error) {
       console.error(error)
+      return undefined
     }
   }
 

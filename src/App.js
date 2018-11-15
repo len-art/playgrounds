@@ -16,7 +16,8 @@ class App extends Component {
       userName: "",
       password: "",
       message: "",
-      isLogedIn: false
+      isLogedIn: false,
+      errorMessage: ""
     }
   }
   // /async componentDidMount() {
@@ -51,12 +52,27 @@ class App extends Component {
     await this.database.addToCollection("messages", payload)
     this.setState({ isLoading: false, message: "" })
   }
+  handleLogin = async () => {
+    const userNameField = { field: "username", value: this.state.userName }
+    const passwordField = { field: "password", value: this.state.password }
+    const userDocument = await this.database.doubleQueryEquals(
+      "users",
+      userNameField,
+      passwordField
+    )
+    if (userDocument !== undefined) {
+      this.setState({ isLogedIn: true, errorMessage: "" })
+    } else {
+      this.setState({ errorMessage: "Error" })
+    }
+    console.log(userDocument)
+  }
   handleRegSubmit = async () => {
     this.setState({ isLogedIn: true })
     const payload = {
       username: this.state.userName,
       password: this.state.password,
-      registeredOn: new Date() // change this field to "registeredOn"
+      registeredOn: new Date()
     }
     await this.database.addToCollection("users", payload)
   }
@@ -78,6 +94,8 @@ class App extends Component {
             handleusernamechange={this.handleUserNameChange}
             handlepassword={this.handlePassword}
             handleregsubmit={this.handleRegSubmit}
+            handleLogin={this.handleLogin}
+            errorMessage={this.state.errorMessage}
           />
         )}
       </div>

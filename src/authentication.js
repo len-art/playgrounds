@@ -14,9 +14,21 @@ const Switcher = props => {
     <div>
       <div>SELECT</div>
       login
-      <input type="radio" name="login" onChange={props.handlelogin} />
+      <input
+        type="radio"
+        name="login"
+        value="login"
+        checked={!props.isregistervisible}
+        onChange={props.handleSwitch}
+      />
       register
-      <input type="radio" name="register" onChange={props.handleregister} />
+      <input
+        type="radio"
+        name="register"
+        value="register"
+        checked={props.isregistervisible}
+        onChange={props.handleSwitch}
+      />
     </div>
   )
 }
@@ -67,38 +79,38 @@ export default class Authentication extends Component {
   constructor(props) {
     super()
     this.state = {
-      isRegisterVisible: true
+      isRegisterVisible: false
     }
   }
-  handleRegister = () => {
-    this.setState({ isRegisterVisible: false })
-  }
-  handleLogin = () => {
-    this.setState({ isRegisterVisible: true })
+  handleSwitch = event => {
+    console.log(event.target.value)
+    this.setState({
+      isRegisterVisible: event.target.value === "register"
+    })
   }
   render() {
-    console.log("isLogedIn", this.state.isLogedIn)
     return (
       <div>
+        {this.props.errorMessage}
         <div>
           <Switcher
-            handleregister={this.handleRegister}
-            handlelogin={this.handleLogin}
+            handleSwitch={this.handleSwitch}
+            isregistervisible={this.state.isRegisterVisible}
           />
         </div>
         <div>
           {this.state.isRegisterVisible ? (
-            <Login
-              onchange={this.props.handleusernamechange}
-              onchangepass={this.props.handlepassword}
-              onclick={this.props.handleregsubmit}
-              handleisregistervisible={this.handleIsRegisterVisible}
-            />
-          ) : (
             <Register
               onchange={this.props.handleusernamechange}
               onchangepass={this.props.handlepassword}
               onclick={this.props.handleregsubmit}
+            />
+          ) : (
+            <Login
+              onchange={this.props.handleusernamechange}
+              onchangepass={this.props.handlepassword}
+              onclick={this.props.handleLogin}
+              handleisregistervisible={this.handleIsRegisterVisible}
             />
           )}
         </div>
