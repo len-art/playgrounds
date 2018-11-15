@@ -48,11 +48,11 @@ class Updater {
     return listener
   }
 
-  async doesUsernameExist(collection, { field: field1, value: value1 }) {
+  async doesUsernameExist(username) {
     try {
       const result = await firestore
-        .collection(collection)
-        .where(field1, "==", value1)
+        .collection("users")
+        .where("username", "==", username)
         .limit(1)
         .get()
       if (!result.empty) {

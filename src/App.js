@@ -69,10 +69,8 @@ class App extends Component {
     console.log(userDocument)
   }
   handleRegSubmit = async () => {
-    const checkuser = { field: "username", value: this.state.userName }
     const userAvailable = await this.database.doesUsernameExist(
-      "users",
-      checkuser
+      this.state.userName
     )
     if (userAvailable !== undefined) {
       this.setState({
