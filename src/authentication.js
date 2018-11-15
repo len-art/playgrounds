@@ -91,6 +91,7 @@ export default class Authentication extends Component {
   render() {
     return (
       <div>
+        {this.props.userTaken}
         {this.props.errorMessage}
         <div>
           <Switcher

@@ -48,7 +48,21 @@ class Updater {
     return listener
   }
 
-  async doesUsernameExist() {}
+  async doesUsernameExist(collection, { field: field1, value: value1 }) {
+    try {
+      const result = await firestore
+        .collection(collection)
+        .where(field1, "==", value1)
+        .limit(1)
+        .get()
+      if (!result.empty) {
+        return result.docs[0].data()
+      }
+    } catch (error) {
+      console.error(error)
+      return undefined
+    }
+  }
 
   async doubleQueryEquals(
     collection,

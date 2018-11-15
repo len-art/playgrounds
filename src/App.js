@@ -17,7 +17,8 @@ class App extends Component {
       password: "",
       message: "",
       isLogedIn: false,
-      errorMessage: ""
+      errorMessage: "",
+      userTaken: ""
     }
   }
   // /async componentDidMount() {
@@ -68,13 +69,26 @@ class App extends Component {
     console.log(userDocument)
   }
   handleRegSubmit = async () => {
-    this.setState({ isLogedIn: true })
-    const payload = {
-      username: this.state.userName,
-      password: this.state.password,
-      registeredOn: new Date()
+    const checkuser = { field: "username", value: this.state.userName }
+    const userAvailable = await this.database.doesUsernameExist(
+      "users",
+      checkuser
+    )
+    if (userAvailable !== undefined) {
+      this.setState({
+        userTaken: "This user allready exists!",
+        isLogedIn: false
+      })
+    } else {
+      this.setState({ isLogedIn: true })
+      const payload = {
+        username: this.state.userName,
+        password: this.state.password,
+        registeredOn: new Date()
+      }
+      await this.database.addToCollection("users", payload)
     }
-    await this.database.addToCollection("users", payload)
+    console.log(userAvailable)
   }
 
   render() {
@@ -96,6 +110,7 @@ class App extends Component {
             handleregsubmit={this.handleRegSubmit}
             handleLogin={this.handleLogin}
             errorMessage={this.state.errorMessage}
+            userTaken={this.state.userTaken}
           />
         )}
       </div>
