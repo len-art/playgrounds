@@ -41,11 +41,13 @@ const Register = props => {
         type="text"
         placeholder="Enter username"
         onChange={props.onchange}
+        value={props.regUserNameField}
       />
       <input
         type="password"
         placeholder="Enter password"
         onChange={props.onchangepass}
+        value={props.regPasswordField}
       />
       <button className="button" onClick={props.onclick}>
         confirm
@@ -118,6 +120,8 @@ export default class Authentication extends Component {
               onchange={this.props.handleusernamechange}
               onchangepass={this.props.handlepassword}
               onclick={this.props.handleregsubmit}
+              regUserNameField={this.props.regUserNameField}
+              regPasswordField={this.props.regPasswordField}
             />
           ) : (
             <Login

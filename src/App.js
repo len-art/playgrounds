@@ -111,6 +111,8 @@ class App extends Component {
             handleLogin={this.handleLogin}
             errorMessage={this.state.errorMessage}
             userTaken={this.state.userTaken}
+            regUserNameField={this.state.userName}
+            regPasswordField={this.state.password}
           />
         )}
       </div>
