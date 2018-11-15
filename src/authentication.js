@@ -82,6 +82,19 @@ export default class Authentication extends Component {
       isRegisterVisible: false
     }
   }
+
+  componentDidMount() {
+    window.addEventListener("keydown", this.enter)
+  }
+  componentWillUnmount() {
+    window.removeEventListener("keydown", this.enter)
+  }
+  enter = target => {
+    if (target.keyCode === 13) {
+      this.props.handleregsubmit() && this.props.handleLogin()
+    }
+  }
+
   handleSwitch = event => {
     console.log(event.target.value)
     this.setState({

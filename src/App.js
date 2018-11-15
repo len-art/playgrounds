@@ -43,7 +43,7 @@ class App extends Component {
   handlePassword = event => {
     this.setState({ password: event.target.value })
   }
-  handleSubmit = async () => {
+  handleSubmitMessage = async () => {
     this.setState({ isLoading: true })
     const payload = {
       message: this.state.message,
@@ -75,7 +75,9 @@ class App extends Component {
     if (userAvailable !== undefined) {
       this.setState({
         userTaken: "This user allready exists!",
-        isLogedIn: false
+        isLogedIn: false,
+        userName: "",
+        password: ""
       })
     } else {
       this.setState({ isLogedIn: true })
@@ -99,7 +101,7 @@ class App extends Component {
             message={this.state.message}
             handleusernamechange={this.handleUserNameChange}
             handlemessagechange={this.handleMessageChange}
-            handlesubmit={this.handleSubmit}
+            handlesubmit={this.handleSubmitMessage}
           />
         ) : (
           <Authentication

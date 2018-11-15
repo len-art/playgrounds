@@ -57,6 +57,8 @@ class Updater {
         .get()
       if (!result.empty) {
         return result.docs[0].data()
+      } else {
+        return undefined
       }
     } catch (error) {
       console.error(error)
