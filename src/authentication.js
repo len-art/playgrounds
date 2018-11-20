@@ -1,18 +1,10 @@
 import React, { Component } from "react"
-import "./login.css"
-/*
-  Parent component should be a class component with state
-  it should allow toggling between Login and Register
-  its render should look something like this:
-  {
-    this.state.isRegistering ? <Register {...this.props} /> : <Login {...this.props} />
-  }
-  */
+import "./authentication.css"
 
 const Register = props => {
   return (
     <div className="containerIn">
-      <h1 className="logIn">Sign In</h1>
+      <h2 className="logIn">Sign In</h2>
       <vl
         style={{
           color: "#ccc",
@@ -47,7 +39,7 @@ const Register = props => {
 const Login = props => {
   return (
     <div className="containerIn">
-      <h1 className="logIn">Log In</h1>
+      <h2 className="logIn">Log In</h2>
       <vl
         style={{
           color: "#ccc",
@@ -97,13 +89,15 @@ export default class Authentication extends Component {
   enter = target => {
     if (target.keyCode === 13 && this.state.isButtonLogOrReg) {
       this.props.handleregsubmit()
-    } else if (target.keyCode === 13 && this.state.isButtonLogOrReg) {
+    } else if (target.keyCode === 13 && !this.state.isButtonLogOrReg) {
       this.props.handleLogin()
+      //no need for && !this.state.isButtonLogOrReg
     }
   }
   handleIsLogOrReg = () => {
     this.setState({ isButtonLogOrReg: !this.state.isButtonLogOrReg })
   }
+
   render() {
     return (
       <div className="container">

@@ -31,9 +31,38 @@
 
 .itemsContainerIn {
   margin: 0px 120px 0px 120px;
-  font-family: "Courier New";
+  font-family: "Avenir next ultra light";
 }
 .logIn {
   text-align: right;
   margin-top: 110px;
+}
+.buttonContainer {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+.button {
+  font-size: 14px;
+  width: auto;
+  height: 30px;
+  border-radius: 20%;
+  border: 0px;
+  background: rgba(95, 158, 160, 0.4);
+  margin: 20px;
+}
+.button:hover {
+  background: rgba(95, 158, 160, 0.8);
+}
+.buttonRegSwitch {
+  font-size: 13px;
+  width: auto;
+  background-color: inherit;
+  height: 20px;
+  border-radius: 20%;
+  border: solid 1px;
+  margin-left: 10px;
+}
+.buttonRegSwitch:hover {
+  background: rgb(95, 158, 160);
 }
