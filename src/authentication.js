@@ -1,5 +1,5 @@
 import React, { Component } from "react"
-
+import "./login.css"
 /*
   Parent component should be a class component with state
   it should allow toggling between Login and Register
@@ -9,70 +9,72 @@ import React, { Component } from "react"
   }
   */
 
-const Switcher = props => {
-  return (
-    <div>
-      <div>SELECT</div>
-      login
-      <input
-        type="radio"
-        name="login"
-        value="login"
-        checked={!props.isregistervisible}
-        onChange={props.handleSwitch}
-      />
-      register
-      <input
-        type="radio"
-        name="register"
-        value="register"
-        checked={props.isregistervisible}
-        onChange={props.handleSwitch}
-      />
-    </div>
-  )
-}
-
 const Register = props => {
   return (
-    <div>
-      <div>please Register</div>
+    <div className="containerIn">
+      <h1 className="logIn">Sign In</h1>
+      <vl
+        style={{
+          color: "#ccc",
+          backgroundColor: "#ccc",
+          height: 1,
+          width: 300
+        }}
+      />
+      <br />
+      <p className="itemsContainerIn">User Name</p>
       <input
         type="text"
-        placeholder="Enter username"
+        className="itemsContainerIn"
         onChange={props.onchange}
-        value={props.regUserNameField}
       />
+      <br />
+      <p className="itemsContainerIn">Password</p>
       <input
         type="password"
-        placeholder="Enter password"
+        className="itemsContainerIn"
         onChange={props.onchangepass}
-        value={props.regPasswordField}
       />
-      <button className="button" onClick={props.onclick}>
-        confirm
-      </button>
+      <div className="buttonContainer">
+        <button className="button" onClick={props.onclick}>
+          SIGN IN
+        </button>
+      </div>
     </div>
   )
 }
 
 const Login = props => {
   return (
-    <div>
-      <div>please LogIn</div>
+    <div className="containerIn">
+      <h1 className="logIn">Log In</h1>
+      <vl
+        style={{
+          color: "#ccc",
+          backgroundColor: "#ccc",
+          height: 1,
+          width: 300
+        }}
+      />
+      <br />
+      <p className="itemsContainerIn">User Name</p>
       <input
         type="text"
-        placeholder="Enter username"
+        className="itemsContainerIn"
         onChange={props.onchange}
       />
+      <br />
+      <p className="itemsContainerIn">Password</p>
       <input
         type="password"
-        placeholder="Enter password"
+        className="itemsContainerIn"
         onChange={props.onchangepass}
       />
-      <button className="button" onClick={props.onclick}>
-        confirm
-      </button>
+      <div className="buttonContainer">
+        <button className="button" onClick={props.onclick}>
+          LOG IN
+        </button>
+      </div>
     </div>
   )
 }
@@ -81,7 +83,8 @@ export default class Authentication extends Component {
   constructor(props) {
     super()
     this.state = {
-      isRegisterVisible: false
+      isRegisterVisible: false,
+      isButtonLogOrReg: false
     }
   }
 
@@ -92,46 +95,59 @@ export default class Authentication extends Component {
     window.removeEventListener("keydown", this.enter)
   }
   enter = target => {
-    if (target.keyCode === 13) {
-      this.props.handleregsubmit() && this.props.handleLogin()
+    if (target.keyCode === 13 && this.state.isButtonLogOrReg) {
+      this.props.handleregsubmit()
+    } else if (target.keyCode === 13 && this.state.isButtonLogOrReg) {
+      this.props.handleLogin()
     }
   }
-
-  handleSwitch = event => {
-    console.log(event.target.value)
-    this.setState({
-      isRegisterVisible: event.target.value === "register"
-    })
+  handleIsLogOrReg = () => {
+    this.setState({ isButtonLogOrReg: !this.state.isButtonLogOrReg })
   }
   render() {
     return (
-      <div>
+      <div className="container">
         {this.props.userTaken}
         {this.props.errorMessage}
-        <div>
-          <Switcher
-            handleSwitch={this.handleSwitch}
-            isregistervisible={this.state.isRegisterVisible}
+        {this.state.isButtonLogOrReg ? (
+          <Register
+            onchange={this.props.handleusernamechange}
+            onchangepass={this.props.handlepassword}
+            onclick={this.props.handleregsubmit}
+            regUserNameField={this.props.regUserNameField}
+            regPasswordField={this.props.regPasswordField}
           />
-        </div>
-        <div>
-          {this.state.isRegisterVisible ? (
-            <Register
-              onchange={this.props.handleusernamechange}
-              onchangepass={this.props.handlepassword}
-              onclick={this.props.handleregsubmit}
-              regUserNameField={this.props.regUserNameField}
-              regPasswordField={this.props.regPasswordField}
-            />
-          ) : (
-            <Login
-              onchange={this.props.handleusernamechange}
-              onchangepass={this.props.handlepassword}
-              onclick={this.props.handleLogin}
-              handleisregistervisible={this.handleIsRegisterVisible}
-            />
-          )}
-        </div>
+        ) : (
+          <Login
+            onchange={this.props.handleusernamechange}
+            onchangepass={this.props.handlepassword}
+            onclick={this.props.handleLogin}
+            handleisregistervisible={this.handleIsRegisterVisible}
+          />
+        )}
+        {this.state.isButtonLogOrReg ? (
+          <h4
+            style={{
+              height: 1
+            }}
+          >
+            Allready have an account?
+            <button className="buttonRegSwitch" onClick={this.handleIsLogOrReg}>
+              Log In
+            </button>
+          </h4>
+        ) : (
+          <h4
+            style={{
+              height: 1
+            }}
+          >
+            Don't have an account?
+            <button className="buttonRegSwitch" onClick={this.handleIsLogOrReg}>
+              Sign In
+            </button>
+          </h4>
+        )}
       </div>
     )
   }
