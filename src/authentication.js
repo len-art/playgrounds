@@ -28,7 +28,7 @@ const Register = props => {
         onChange={props.onchangepass}
       />
       <div className="buttonContainer">
-        <button className="button" onClick={props.onclick}>
+        <button className="buttonIn" onClick={props.onclick}>
           SIGN IN
         </button>
       </div>
@@ -63,7 +63,7 @@ const Login = props => {
         onChange={props.onchangepass}
       />
       <div className="buttonContainer">
-        <button className="button" onClick={props.onclick}>
+        <button className="buttonIn" onClick={props.onclick}>
           LOG IN
         </button>
       </div>

@@ -3,7 +3,6 @@ import React, { Component } from "react"
 import { firestore } from "./firebase"
 import Database from "./database"
 import NewMessage from "./newMessage"
-import History from "./history"
 import Authentication from "./authentication"
 
 import "./App.css"

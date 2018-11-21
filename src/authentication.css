@@ -42,7 +42,7 @@
   justify-content: center;
   width: 100%;
 }
-.button {
+.buttonIn {
   font-size: 14px;
   width: auto;
   height: 30px;
@@ -51,7 +51,7 @@
   background: rgba(95, 158, 160, 0.4);
   margin: 20px;
 }
-.button:hover {
+.buttonIn:hover {
   background: rgba(95, 158, 160, 0.8);
 }
 .buttonRegSwitch {

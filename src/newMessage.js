@@ -30,40 +30,40 @@ export default class NewMessage extends Component {
     console.log(this.props.username)
     return (
       <div>
-        <button onClick={this.handleReload}>LOG OUT</button>
-        <div className="Container">
-          <div>
-            <History
-              database={this.props.database}
-              username={this.props.username}
-            />
+        <button onClick={this.handleReload} className="logOut">LOG OUT</button>
+          <div className="outLineHistoryContainer">
             <div className="HistoryContainer">
-              <textarea
-                id="description"
-                rows="1"
-                cols="50"
-                placeholder="Type a message..."
-                className="textContainer"
-                name=""
-                type="text"
-                value={this.props.message}
-                onChange={this.props.handlemessagechange}
+              <History
+                database={this.props.database}
+                username={this.props.username}
               />
-            </div>
-            <div>
               <div>
-                {this.state.isLoading ? (
-                  <div className="lds-ripple">
-                    <div />
-                    <div />
-                  </div>
-                ) : (
-                  <div>{""}</div>
-                )}
+                <textarea
+                  id="description"
+                  rows="1"
+                  cols="50"
+                  placeholder="Type a message..."
+                  className="textContainer"
+                  name=""
+                  type="text"
+                  value={this.props.message}
+                  onChange={this.props.handlemessagechange}
+                />
+              </div>
+              <div>
+                <div>
+                  {this.state.isLoading ? (
+                    <div className="lds-ripple">
+                      <div />
+                      <div />
+                    </div>
+                  ) : (
+                    <div>{""}</div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
       </div>
     )
   }
