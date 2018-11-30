@@ -1,6 +1,6 @@
 import React, { Component } from "react"
+import { sha256 } from "crypto-hash"
 
-import { firestore } from "./firebase"
 import Database from "./database"
 import NewMessage from "./newMessage"
 import Authentication from "./authentication"
@@ -41,7 +41,10 @@ class App extends Component {
   }
   handleLogin = async () => {
     const userNameField = { field: "username", value: this.state.userName }
-    const passwordField = { field: "password", value: this.state.password }
+    const passwordField = {
+      field: "password",
+      value: await sha256(this.state.password)
+    }
     const userDocument = await this.database.doubleQueryEquals(
       "users",
       userNameField,
@@ -69,7 +72,7 @@ class App extends Component {
       this.setState({ isLogedIn: true })
       const payload = {
         username: this.state.userName,
-        password: this.state.password,
+        password: await sha256(this.state.password),
         registeredOn: new Date()
       }
       await this.database.addToCollection("users", payload)

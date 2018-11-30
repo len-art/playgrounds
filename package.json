@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "crypto-hash": "^1.0.0",
     "firebase": "^5.5.6",
     "lint": "^1.1.2",
     "moment": "^2.22.2",

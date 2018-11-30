@@ -3,15 +3,18 @@ import "./authentication.css"
 
 const Register = props => {
   return (
-    <div>
-      <h2>Sign In</h2>
-      <p>User Name</p>
-      <input type="text" onChange={props.onchange} />
-      <p>Password</p>
-      <input type="password" onChange={props.onchangepass} />
-      <div>
-        <button onClick={props.onclick}>SIGN IN</button>
+    <div className="logInItems">
+      <h2 className="items1">Sign In</h2>
+      <div className="line" />
+      <div className="items2">
+        <p>User Name</p>
+        <input type="text" onChange={props.onchange} />
+        <p>Password</p>
+        <input type="password" onChange={props.onchangepass} />
       </div>
+      <button className="button" onClick={props.onclick}>
+        SIGN IN
+      </button>
     </div>
   )
 }
@@ -67,13 +70,15 @@ export default class Authentication extends Component {
         {this.props.userTaken}
         {this.props.errorMessage}
         {this.state.isButtonLogOrReg ? (
-          <Register
-            onchange={this.props.handleusernamechange}
-            onchangepass={this.props.handlepassword}
-            onclick={this.props.handleregsubmit}
-            regUserNameField={this.props.regUserNameField}
-            regPasswordField={this.props.regPasswordField}
-          />
+          <div className="insideLogInScreen">
+            <Register
+              onchange={this.props.handleusernamechange}
+              onchangepass={this.props.handlepassword}
+              onclick={this.props.handleregsubmit}
+              regUserNameField={this.props.regUserNameField}
+              regPasswordField={this.props.regPasswordField}
+            />
+          </div>
         ) : (
           <div className="insideLogInScreen">
             <Login

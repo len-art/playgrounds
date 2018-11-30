@@ -1,6 +1,6 @@
 import { firestore } from "./firebase"
 
-class Updater {
+class Database {
   async getSpecificDoc(collection, id) {
     /* gets a specific doc from the collection */
     const document = await firestore
@@ -109,4 +109,4 @@ class Updater {
   }
 }
 
-export default Updater
+export default Database
