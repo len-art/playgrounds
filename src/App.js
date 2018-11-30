@@ -79,7 +79,7 @@ class App extends Component {
 
   render() {
     return (
-      <div className="App">
+      <div className="flexContainer">
         {this.state.isLogedIn ? (
           <NewMessage
             database={this.database}

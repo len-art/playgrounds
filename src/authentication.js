@@ -3,34 +3,14 @@ import "./authentication.css"
 
 const Register = props => {
   return (
-    <div className="containerIn">
-      <h2 className="logIn">Sign In</h2>
-      <vl
-        style={{
-          color: "#ccc",
-          backgroundColor: "#ccc",
-          height: 1,
-          width: 300
-        }}
-      />
-      <br />
-      <p className="itemsContainerIn">User Name</p>
-      <input
-        type="text"
-        className="itemsContainerIn"
-        onChange={props.onchange}
-      />
-      <br />
-      <p className="itemsContainerIn">Password</p>
-      <input
-        type="password"
-        className="itemsContainerIn"
-        onChange={props.onchangepass}
-      />
-      <div className="buttonContainer">
-        <button className="buttonIn" onClick={props.onclick}>
-          SIGN IN
-        </button>
+    <div>
+      <h2>Sign In</h2>
+      <p>User Name</p>
+      <input type="text" onChange={props.onchange} />
+      <p>Password</p>
+      <input type="password" onChange={props.onchangepass} />
+      <div>
+        <button onClick={props.onclick}>SIGN IN</button>
       </div>
     </div>
   )
@@ -38,35 +18,18 @@ const Register = props => {
 
 const Login = props => {
   return (
-    <div className="containerIn">
-      <h2 className="logIn">Log In</h2>
-      <vl
-        style={{
-          color: "#ccc",
-          backgroundColor: "#ccc",
-          height: 1,
-          width: 300
-        }}
-      />
-      <br />
-      <p className="itemsContainerIn">User Name</p>
-      <input
-        type="text"
-        className="itemsContainerIn"
-        onChange={props.onchange}
-      />
-      <br />
-      <p className="itemsContainerIn">Password</p>
-      <input
-        type="password"
-        className="itemsContainerIn"
-        onChange={props.onchangepass}
-      />
-      <div className="buttonContainer">
-        <button className="buttonIn" onClick={props.onclick}>
-          LOG IN
-        </button>
+    <div className="logInItems">
+      <h2 className="items1">Log In</h2>
+      <div className="line" />
+      <div className="items2">
+        <p>USER NAME</p>
+        <input type="text" onChange={props.onchange} />
+        <p>PASSWORD</p>
+        <input type="password" onChange={props.onchangepass} />
       </div>
+      <button className="button" onClick={props.onclick}>
+        LOG IN
+      </button>
     </div>
   )
 }
@@ -100,7 +63,7 @@ export default class Authentication extends Component {
 
   render() {
     return (
-      <div className="container">
+      <div className="logInScreen">
         {this.props.userTaken}
         {this.props.errorMessage}
         {this.state.isButtonLogOrReg ? (
@@ -112,35 +75,29 @@ export default class Authentication extends Component {
             regPasswordField={this.props.regPasswordField}
           />
         ) : (
-          <Login
-            onchange={this.props.handleusernamechange}
-            onchangepass={this.props.handlepassword}
-            onclick={this.props.handleLogin}
-            handleisregistervisible={this.handleIsRegisterVisible}
-          />
+          <div className="insideLogInScreen">
+            <Login
+              onchange={this.props.handleusernamechange}
+              onchangepass={this.props.handlepassword}
+              onclick={this.props.handleLogin}
+              handleisregistervisible={this.handleIsRegisterVisible}
+            />
+          </div>
         )}
         {this.state.isButtonLogOrReg ? (
-          <h4
-            style={{
-              height: 1
-            }}
-          >
+          <p className="bottomItem">
             Allready have an account?
-            <button className="buttonRegSwitch" onClick={this.handleIsLogOrReg}>
+            <button className="bottomButton" onClick={this.handleIsLogOrReg}>
               Log In
             </button>
-          </h4>
+          </p>
         ) : (
-          <h4
-            style={{
-              height: 1
-            }}
-          >
+          <p className="bottomItem">
             Don't have an account?
-            <button className="buttonRegSwitch" onClick={this.handleIsLogOrReg}>
+            <button className="bottomButton" onClick={this.handleIsLogOrReg}>
               Sign In
             </button>
-          </h4>
+          </p>
         )}
       </div>
     )
