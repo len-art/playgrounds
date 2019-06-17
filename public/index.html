@@ -5,6 +5,27 @@
     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
+    <style>
+      #root {
+        width: 100vw;
+        height: 100vh;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+      }
+      .styled {
+        background-image: paint(placeholder-box);
+        padding: 10px 15px;
+        flex: 1;
+      }
+      .weird {
+        background-image: paint(weird-div);
+        padding: 40px;
+        width: 80%;
+        height: 100%;
+      }
+    </style>
     <!--
       manifest.json provides metadata used when your web app is installed on a
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
@@ -23,7 +44,27 @@
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
+    <div id="root">
+      <div class="container">
+        <div class="styled">
+          I'm just so fancy. Oh, and look at me being dynamic as well!
+        </div>
+        <div class="weird">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+          eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
+          minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+          aliquip ex ea commodo consequat. Duis aute irure dolor in
+          reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+          pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+          culpa qui officia deserunt mollit anim id est laborum.
+        </div>
+      </div>
+    </div>
+    <script>
+      if ("paintWorklet" in CSS) {
+        CSS.paintWorklet.addModule("worklet.js");
+      }
+    </script>
     <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.
