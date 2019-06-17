@@ -37,12 +37,12 @@ export default class extends React.Component {
     const p2 = [400, 200];
     const c = this.getMidPoint(p1, p2);
     const r = this.getDistance(p1, p2) / 2;
-    // const curve = this.getRightAnglePointOnCircle(c, r);
+    const curve = this.getRightAnglePointOnCircle(c, r);
     const oppositeLength = this.getAdjacentLength(r);
     console.log(oppositeLength);
 
-    // ctx.arc(...curve, 2, 0, Math.PI * 2);
-    // ctx.fill();
+    ctx.arc(...curve, 2, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.moveTo(...c);
     ctx.arc(...c, 2, 0, Math.PI * 2);
