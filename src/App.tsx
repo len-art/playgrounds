@@ -2,6 +2,9 @@ import React from "react";
 import mapboxgl from "mapbox-gl";
 import "./App.css";
 
+// @ts-ignore
+import vtxShader from "./shaders/vertex.vs";
+
 const mapsConfig = {
   mapboxKey:
     "pk.eyJ1IjoibWlrZXdhZGhlcmEiLCJhIjoiY2prMGp1cXZmMDdrNzNxb2c4aG0yN2RwciJ9.l9HDsogzG93aM4VMmL5PbA",
@@ -94,13 +97,20 @@ export default class extends React.Component {
     // https://docs.mapbox.com/mapbox-gl-js/api/#styleimageinterface#onadd
     onAdd: function(map: mapboxgl.Map, gl: WebGL2RenderingContext) {
       // create GLSL source for vertex shader
-      var vertexSource =
-        "" +
-        "uniform mat4 u_matrix;" +
-        "attribute vec2 a_pos;" +
-        "void main() {" +
-        "    gl_Position = u_matrix * vec4(a_pos, 0.0, 1.0);" +
-        "}";
+      var vertexSource = `
+      uniform mat4 u_matrix;
+      attribute vec2 a_pos;
+      void main (){
+        gl_Position = u_matrix * vec4(a_pos, 0.0, 1.0);
+      }
+      `;
+
+      // "" +
+      // "uniform mat4 u_matrix;" +
+      // "attribute vec2 a_pos;" +
+      // "void main() {" +
+      // "    gl_Position = u_matrix * vec4(a_pos, 0.0, 1.0);" +
+      // "}";
 
       // create GLSL source for fragment shader
       var fragmentSource =
