@@ -2,8 +2,7 @@ import React from "react";
 import mapboxgl from "mapbox-gl";
 import "./App.css";
 
-// @ts-ignore
-import vtxShader from "./shaders/vertex.vs";
+import data from "./data";
 
 const mapsConfig = {
   mapboxKey:
@@ -24,10 +23,16 @@ interface State {
 
 interface ExtendedLayer extends mapboxgl.CustomLayerInterface {
   program: WebGLProgram | null;
-  aPos: number;
-  buffer: WebGLBuffer | null;
+  aPosLocation: number;
+  aColorLocation: number;
+  vertexBuffer: WebGLBuffer | null;
+  colorBuffer: WebGLBuffer | null;
   type: any;
 }
+
+let clusterSize = 0;
+
+let colors: number[] | undefined;
 
 export default class extends React.Component {
   highlightProgram: WebGLProgram | null = null;
@@ -81,17 +86,19 @@ export default class extends React.Component {
     }
     this.map.on("load", () => {
       // @ts-ignore
-      this.map && this.map.addLayer(this.highlightLayer, "building");
+      this.map && this.map.addLayer(this.highlightLayer);
     });
   };
 
   // create a custom style layer to implement the WebGL content
   highlightLayer: ExtendedLayer = {
-    id: "highlight",
+    id: "foo",
     type: "custom",
     program: null,
-    aPos: 0,
-    buffer: null,
+    aPosLocation: 0,
+    aColorLocation: 0,
+    vertexBuffer: null,
+    colorBuffer: null,
 
     // method called when the layer is added to the map
     // https://docs.mapbox.com/mapbox-gl-js/api/#styleimageinterface#onadd
@@ -100,24 +107,29 @@ export default class extends React.Component {
       var vertexSource = `
       uniform mat4 u_matrix;
       attribute vec2 a_pos;
-      void main (){
-        gl_Position = u_matrix * vec4(a_pos, 0.0, 1.0);
-      }
-      `;
+      attribute vec4 a_color;
+      varying vec4 color;
 
-      // "" +
-      // "uniform mat4 u_matrix;" +
-      // "attribute vec2 a_pos;" +
-      // "void main() {" +
-      // "    gl_Position = u_matrix * vec4(a_pos, 0.0, 1.0);" +
-      // "}";
+      void main() {
+        gl_Position = u_matrix * vec4(a_pos, 0.0, 1.0);
+        gl_PointSize = 20.0;
+        color = a_color;
+      }`;
 
       // create GLSL source for fragment shader
-      var fragmentSource =
-        "" +
-        "void main() {" +
-        "    gl_FragColor = vec4(1.0, 0.0, 0.0, 0.5);" +
-        "}";
+      var fragmentSource = `
+      precision mediump float;
+      varying vec4 color;
+      void main() {
+        float r = 0.0, delta = 0.0, alpha = 1.0;
+        vec2 cxy = 2.0 * gl_PointCoord - 1.0;
+        r = dot(cxy, cxy);
+        if (r > 1.0) {
+            discard;
+        }
+
+        gl_FragColor = color;
+      }`;
 
       // create a vertex shader
       const vertexShader = gl.createShader(gl.VERTEX_SHADER);
@@ -139,36 +151,38 @@ export default class extends React.Component {
         gl.attachShader(this.program, vertexShader);
         gl.attachShader(this.program, fragmentShader);
         gl.linkProgram(this.program);
-        this.aPos = gl.getAttribLocation(this.program, "a_pos");
+        this.aPosLocation = gl.getAttribLocation(this.program, "a_pos");
+        this.aColorLocation = gl.getAttribLocation(this.program, "a_color");
       }
 
-      // define vertices of the triangle to be rendered in the custom style layer
-      var helsinki = mapboxgl.MercatorCoordinate.fromLngLat({
-        lng: 25.004,
-        lat: 60.239
-      });
-      var berlin = mapboxgl.MercatorCoordinate.fromLngLat({
-        lng: 13.403,
-        lat: 52.562
-      });
-      var kyiv = mapboxgl.MercatorCoordinate.fromLngLat({
-        lng: 30.498,
-        lat: 50.541
-      });
+      const { locations, colors } = data.pins.reduce(
+        (acc: { locations: number[][]; colors: number[][] }, cluster) => {
+          cluster.pins.forEach(p => {
+            const l = mapboxgl.MercatorCoordinate.fromLngLat(p.location);
+            acc.locations.push([l.x, l.y]);
+            // acc.colors.push([0.9, 0.1, 0.9]);
+            acc.colors.push(data.possessions[p.possessionType].color);
+          });
+          return acc;
+        },
+        { locations: [], colors: [] }
+      );
+      console.log(locations.flat(), colors.flat());
+      clusterSize = locations.length;
 
-      // create and initialize a WebGLBuffer to store vertex and color data
-      this.buffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+      this.vertexBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
       gl.bufferData(
         gl.ARRAY_BUFFER,
-        new Float32Array([
-          helsinki.x,
-          helsinki.y,
-          berlin.x,
-          berlin.y,
-          kyiv.x,
-          kyiv.y
-        ]),
+        new Float32Array(locations.flat()),
+        gl.STATIC_DRAW
+      );
+
+      this.colorBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(colors.flat()),
         gl.STATIC_DRAW
       );
     },
@@ -176,20 +190,29 @@ export default class extends React.Component {
     // method fired on each animation frame
     // https://docs.mapbox.com/mapbox-gl-js/api/#map.event:render
     render: function(gl: WebGL2RenderingContext, matrix: Iterable<number>) {
+      gl.useProgram(this.program);
       if (this.program) {
-        gl.useProgram(this.program);
         gl.uniformMatrix4fv(
           gl.getUniformLocation(this.program, "u_matrix"),
           false,
           matrix
         );
       }
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-      gl.enableVertexAttribArray(this.aPos);
-      gl.vertexAttribPointer(this.aPos, 2, gl.FLOAT, false, 0, 0);
+      /* vertices */
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+
+      gl.vertexAttribPointer(this.aPosLocation, 2, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(this.aPosLocation);
+
+      /* colors */
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
+
+      gl.vertexAttribPointer(this.aColorLocation, 4, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(this.aColorLocation);
+
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 3);
+      gl.drawArrays(gl.POINTS, 0, clusterSize);
     }
   };
 
@@ -201,31 +224,3 @@ export default class extends React.Component {
     );
   }
 }
-
-// const App: React.FC = () => {
-//   const [mapState, setMapState] = React.useState({
-//     lng: 5,
-//     lat: 34,
-//     zoom: 2
-//     })
-//   return (
-//     <div className="App">
-//       <header className="App-header">
-//         <img src={logo} className="App-logo" alt="logo" />
-//         <p>
-//           Edit <code>src/App.tsx</code> and save to reload.
-//         </p>
-//         <a
-//           className="App-link"
-//           href="https://reactjs.org"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           Learn React
-//         </a>
-//       </header>
-//     </div>
-//   );
-// }
-
-// export default App;
