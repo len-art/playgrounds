@@ -13,14 +13,6 @@ const mapsConfig = {
 
 mapboxgl.accessToken = mapsConfig.mapboxKey;
 
-interface State {
-  map: {
-    lng: number;
-    lat: number;
-    zoom: number;
-  };
-}
-
 interface ExtendedLayer extends mapboxgl.CustomLayerInterface {
   program: WebGLProgram | null;
   aPosLocation: number;
@@ -88,6 +80,7 @@ export default class extends React.Component {
       // @ts-ignore
       this.map && this.map.addLayer(this.highlightLayer);
     });
+    this.map.on("click", this.handleClick);
   };
 
   // create a custom style layer to implement the WebGL content
@@ -121,7 +114,7 @@ export default class extends React.Component {
       precision mediump float;
       varying vec4 color;
       void main() {
-        float r = 0.0, delta = 0.0, alpha = 1.0;
+        float r = 0.0;
         vec2 cxy = 2.0 * gl_PointCoord - 1.0;
         r = dot(cxy, cxy);
         if (r > 1.0) {
@@ -216,11 +209,14 @@ export default class extends React.Component {
     }
   };
 
+  handleClick = (e: mapboxgl.MapMouseEvent & mapboxgl.EventData) => {
+    if (!this.map) {
+      return;
+    }
+    console.log(e.lngLat, e.point);
+  };
+
   render() {
-    return (
-      <div ref={this.mapContainer} className="mapContainer">
-        Map
-      </div>
-    );
+    return <div ref={this.mapContainer} className="mapContainer"></div>;
   }
 }
