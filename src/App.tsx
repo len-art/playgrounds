@@ -80,12 +80,12 @@ export default class extends React.Component {
       // @ts-ignore
       this.map && this.map.addLayer(this.highlightLayer);
     });
-    this.map.on("click", this.handleClick);
+    this.map.on("click", "skipIns", this.handleClick);
   };
 
   // create a custom style layer to implement the WebGL content
   highlightLayer: ExtendedLayer = {
-    id: "foo",
+    id: "skipIns",
     type: "custom",
     program: null,
     aPosLocation: 0,
@@ -117,9 +117,9 @@ export default class extends React.Component {
         float r = 0.0;
         vec2 cxy = 2.0 * gl_PointCoord - 1.0;
         r = dot(cxy, cxy);
-        if (r > 1.0) {
-            discard;
-        }
+        // if (r > 1.0) {
+        //     discard;
+        // }
 
         gl_FragColor = color;
       }`;
@@ -205,7 +205,7 @@ export default class extends React.Component {
 
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      gl.drawArrays(gl.POINTS, 0, clusterSize);
+      gl.drawArrays(gl.TRIANGLE_FAN, 0, clusterSize);
     }
   };
 
@@ -213,7 +213,11 @@ export default class extends React.Component {
     if (!this.map) {
       return;
     }
-    console.log(e.lngLat, e.point);
+    // @ts-ignore
+    console.log(e, this.map.transform);
+    const click = e.point;
+    const mapLngLat = this.mapState;
+    // const unprojectedCamera = this.map.unproject(mapLngLat);
   };
 
   render() {
