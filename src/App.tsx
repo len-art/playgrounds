@@ -164,87 +164,45 @@ export default class extends React.Component {
 
       this.pinDetails = [];
       data.pins.forEach(cluster => {
-        cluster.pins.forEach(pin => {
-          if (!this.program) {
-            return;
-          }
-          const aPosLocation = gl.getAttribLocation(this.program, "a_pos");
-          const aColorLocation = gl.getAttribLocation(this.program, "a_color");
+        if (!this.program) {
+          return;
+        }
+        const aPosLocation = gl.getAttribLocation(this.program, "a_pos");
+        const aColorLocation = gl.getAttribLocation(this.program, "a_color");
 
-          const projection = mapboxgl.MercatorCoordinate.fromLngLat(
-            pin.location
-          );
-          const vertices = getPinVertices(projection);
-          const colors = Array.from(
-            new Array(vertices.length),
-            () => data.possessions[pin.possessionType].color
-          );
+        const projection = mapboxgl.MercatorCoordinate.fromLngLat(
+          cluster.pins[0].location
+        );
+        const vertices = getPinVertices(projection);
+        const colors = Array.from(
+          new Array(vertices.length),
+          () => data.possessions[cluster.pins[0].possessionType].color
+        );
 
-          const posBuffer = gl.createBuffer();
-          gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
-          gl.bufferData(
-            gl.ARRAY_BUFFER,
-            new Float32Array(vertices.flat()),
-            gl.STATIC_DRAW
-          );
+        const posBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array(vertices.flat()),
+          gl.STATIC_DRAW
+        );
 
-          const colorBuffer = gl.createBuffer();
-          gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-          gl.bufferData(
-            gl.ARRAY_BUFFER,
-            new Float32Array(colors.flat()),
-            gl.STATIC_DRAW
-          );
+        const colorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array(colors.flat()),
+          gl.STATIC_DRAW
+        );
 
-          this.pinDetails.push({
-            aPosLocation,
-            aColorLocation,
-            posBuffer,
-            colorBuffer,
-            arraySize: vertices.length
-          });
+        this.pinDetails.push({
+          aPosLocation,
+          aColorLocation,
+          posBuffer,
+          colorBuffer,
+          arraySize: vertices.length
         });
       });
-      // data.pins.forEach(cluster => {
-      //   if (!this.program) {
-      //     return;
-      //   }
-      //   const aPosLocation = gl.getAttribLocation(this.program, "a_pos");
-      //   const aColorLocation = gl.getAttribLocation(this.program, "a_color");
-
-      //   const projection = mapboxgl.MercatorCoordinate.fromLngLat(
-      //     cluster.pins[0].location
-      //   );
-      //   const vertices = getPinVertices(projection);
-      //   const colors = Array.from(
-      //     new Array(vertices.length),
-      //     () => data.possessions[cluster.pins[0].possessionType].color
-      //   );
-
-      //   const posBuffer = gl.createBuffer();
-      //   gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
-      //   gl.bufferData(
-      //     gl.ARRAY_BUFFER,
-      //     new Float32Array(vertices.flat()),
-      //     gl.STATIC_DRAW
-      //   );
-
-      //   const colorBuffer = gl.createBuffer();
-      //   gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-      //   gl.bufferData(
-      //     gl.ARRAY_BUFFER,
-      //     new Float32Array(colors.flat()),
-      //     gl.STATIC_DRAW
-      //   );
-
-      //   this.pinDetails.push({
-      //     aPosLocation,
-      //     aColorLocation,
-      //     posBuffer,
-      //     colorBuffer,
-      //     arraySize: vertices.length
-      //   });
-      // });
       clusterSize = this.pinDetails.length;
     },
     render: function(gl: WebGL2RenderingContext, matrix: Iterable<number>) {
