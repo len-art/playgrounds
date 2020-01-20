@@ -1,9 +1,8 @@
 import React from "react";
 import mapboxgl from "mapbox-gl";
 import "./App.css";
-import math from "mathjs";
 
-import data from "./data";
+import data, { PinCluster } from "./data";
 
 const mapsConfig = {
   mapboxKey:
@@ -37,8 +36,6 @@ interface ExtendedLayer extends TestLayer {
 }
 
 let clusterSize = 0;
-
-let colors: number[] | undefined;
 
 const getPinVertices = (loc: mapboxgl.MercatorCoordinate) => {
   const mercatorRadius = 0.000006;
@@ -121,7 +118,6 @@ export default class extends React.Component {
       return;
     }
     this.map.on("load", () => {
-      // @ts-ignore
       // this.map && this.map.addLayer(this.testLayer);
       this.map && this.map.addLayer(this.highlightLayer);
     });
@@ -133,22 +129,27 @@ export default class extends React.Component {
       return;
     }
     const projectedClick = mapboxgl.MercatorCoordinate.fromLngLat(e.lngLat);
+    const clickedPin = data.pins.reduce(
+      (acc: PinCluster | undefined, cluster) => {
+        if (acc) {
+          return acc;
+        }
+        const projection = mapboxgl.MercatorCoordinate.fromLngLat(
+          cluster.pins[0].location
+        );
+        // we should only compute vertices when copying them to the buffer
+        const vertices = getPinVertices(projection);
 
-    const projectedObjects = data.pins.reduce((acc: number[][][], cluster) => {
-      const projection = mapboxgl.MercatorCoordinate.fromLngLat(
-        cluster.pins[0].location
-      );
-      const vertices = getPinVertices(projection);
-      acc.push(vertices);
-      return acc;
-    }, []);
-
-    console.log(
-      projectedObjects.map(
-        point =>
-          isPointInPolygon([projectedClick.x, projectedClick.y], point) && point
-      )
+        const wasClicked = isPointInPolygon(
+          [projectedClick.x, projectedClick.y],
+          vertices
+        );
+        return wasClicked ? cluster : acc;
+      },
+      undefined
     );
+
+    console.log(clickedPin);
   };
 
   highlightLayer: ExtendedLayer = {
@@ -209,6 +210,7 @@ export default class extends React.Component {
       }
 
       this.pinDetails = [];
+
       data.pins.forEach(cluster => {
         if (!this.program) {
           return;

@@ -45,7 +45,7 @@ interface Pin {
   action: string;
 }
 
-interface PinCluster {
+export interface PinCluster {
   pins: Pin[];
   isSelected: boolean;
 }
