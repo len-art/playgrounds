@@ -1,6 +1,7 @@
 import React from "react";
 import mapboxgl from "mapbox-gl";
 import "./App.css";
+import math from "mathjs";
 
 import data from "./data";
 
@@ -57,6 +58,28 @@ const getPinVertices = (loc: mapboxgl.MercatorCoordinate) => {
   ];
 };
 
+/* simplified 2d ray cast becaue we only render 2d-like */
+const isPointInPolygon = ([x, y]: number[], vs: number[][]) =>
+  vs.reduce((acc, point, index, self) => {
+    const nextPoint = (index + 1) % self.length;
+    const x1 = point[0],
+      y1 = point[1];
+
+    var x2 = vs[nextPoint][0],
+      y2 = vs[nextPoint][1];
+
+    const isY1Bigger = y1 > y;
+    const isY2Bigger = y2 > y;
+
+    const doesIntersect =
+      isY1Bigger !== isY2Bigger && x < ((x2 - x1) * (y - y1)) / (y2 - y1) + x1;
+
+    if (doesIntersect) {
+      return !acc;
+    }
+    return acc;
+  }, false);
+
 export default class extends React.Component {
   highlightProgram: WebGLProgram | null = null;
   highlightAPos: number = 0;
@@ -109,15 +132,23 @@ export default class extends React.Component {
     if (!this.map) {
       return;
     }
-    const { width, height } = this.map.getCanvas().getBoundingClientRect();
+    const projectedClick = mapboxgl.MercatorCoordinate.fromLngLat(e.lngLat);
 
-    const mNormalised = [
-      (e.point.x * 2) / width - 1,
-      1 - (e.point.y * 2) / height,
-      1
-    ];
-    const rayClip = [mNormalised[0], mNormalised[1], -1.0, 1.0];
-    console.log(mNormalised, rayClip);
+    const projectedObjects = data.pins.reduce((acc: number[][][], cluster) => {
+      const projection = mapboxgl.MercatorCoordinate.fromLngLat(
+        cluster.pins[0].location
+      );
+      const vertices = getPinVertices(projection);
+      acc.push(vertices);
+      return acc;
+    }, []);
+
+    console.log(
+      projectedObjects.map(
+        point =>
+          isPointInPolygon([projectedClick.x, projectedClick.y], point) && point
+      )
+    );
   };
 
   highlightLayer: ExtendedLayer = {
@@ -188,7 +219,6 @@ export default class extends React.Component {
         const projection = mapboxgl.MercatorCoordinate.fromLngLat(
           cluster.pins[0].location
         );
-        console.log(projection);
         const vertices = getPinVertices(projection);
         const colors = Array.from(
           new Array(vertices.length),
@@ -222,7 +252,6 @@ export default class extends React.Component {
       clusterSize = this.pinDetails.length;
     },
     render: function(gl: WebGL2RenderingContext, matrix: Iterable<number>) {
-      console.log(matrix);
       gl.useProgram(this.program);
       if (this.program) {
         gl.uniformMatrix4fv(
