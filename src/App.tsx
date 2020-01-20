@@ -46,13 +46,13 @@ const getPinVertices = (loc: mapboxgl.MercatorCoordinate) => {
   return [
     c,
     [c[0], c[1] - mercatorRadius],
-    [c[0] + mercatorRadius / 2, c[1] - mercatorRadius / 2],
+    [c[0] + mercatorRadius / 1.5, c[1] - mercatorRadius / 1.5],
     [c[0] + mercatorRadius, c[1]],
-    [c[0] + mercatorRadius / 2, c[1] + mercatorRadius / 2],
+    [c[0] + mercatorRadius / 1.5, c[1] + mercatorRadius / 1.5],
     [c[0], c[1] + mercatorRadius * 1.2],
-    [c[0] - mercatorRadius / 2, c[1] + mercatorRadius / 2],
+    [c[0] - mercatorRadius / 1.5, c[1] + mercatorRadius / 1.5],
     [c[0] - mercatorRadius, c[1]],
-    [c[0] - mercatorRadius / 2, c[1] - mercatorRadius / 2],
+    [c[0] - mercatorRadius / 1.5, c[1] - mercatorRadius / 1.5],
     [c[0], c[1] - mercatorRadius]
   ];
 };
@@ -71,8 +71,8 @@ export default class extends React.Component {
       this.map = new mapboxgl.Map({
         container: this.mapContainer.current,
         style: "mapbox://styles/mapbox/streets-v11",
-        center: [5, 34],
-        zoom: 2
+        center: [-77.0369, 38.9072],
+        zoom: 12
       });
     }
     this.setMapEvents();
@@ -103,6 +103,21 @@ export default class extends React.Component {
       this.map && this.map.addLayer(this.highlightLayer);
     });
     this.map.on("click", this.handleClick);
+  };
+
+  handleClick = (e: mapboxgl.MapMouseEvent & mapboxgl.EventData) => {
+    if (!this.map) {
+      return;
+    }
+    const { width, height } = this.map.getCanvas().getBoundingClientRect();
+
+    const mNormalised = [
+      (e.point.x * 2) / width - 1,
+      1 - (e.point.y * 2) / height,
+      1
+    ];
+    const rayClip = [mNormalised[0], mNormalised[1], -1.0, 1.0];
+    console.log(mNormalised, rayClip);
   };
 
   highlightLayer: ExtendedLayer = {
@@ -173,6 +188,7 @@ export default class extends React.Component {
         const projection = mapboxgl.MercatorCoordinate.fromLngLat(
           cluster.pins[0].location
         );
+        console.log(projection);
         const vertices = getPinVertices(projection);
         const colors = Array.from(
           new Array(vertices.length),
@@ -206,6 +222,7 @@ export default class extends React.Component {
       clusterSize = this.pinDetails.length;
     },
     render: function(gl: WebGL2RenderingContext, matrix: Iterable<number>) {
+      console.log(matrix);
       gl.useProgram(this.program);
       if (this.program) {
         gl.uniformMatrix4fv(
@@ -214,7 +231,6 @@ export default class extends React.Component {
           matrix
         );
       }
-
       this.pinDetails.forEach(pd => {
         gl.bindBuffer(gl.ARRAY_BUFFER, pd.posBuffer);
 
@@ -347,17 +363,6 @@ export default class extends React.Component {
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       gl.drawArrays(gl.POINTS, 0, clusterSize);
     }
-  };
-
-  handleClick = (e: mapboxgl.MapMouseEvent & mapboxgl.EventData) => {
-    if (!this.map) {
-      return;
-    }
-
-    console.log(
-      mapboxgl.MercatorCoordinate.fromLngLat(data.pins[0].pins[0].location)
-    );
-    console.log(mapboxgl.MercatorCoordinate.fromLngLat(e.lngLat));
   };
 
   render() {
