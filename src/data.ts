@@ -1,3 +1,21 @@
+import batteryAlertIcon from "./img/batteryAlert.svg";
+import babyIcon from "./img/baby.svg";
+import powerIcon from "./img/power.svg";
+import buildIcon from "./img/build.svg";
+import gpsFixedIcon from "./img/gpsFixed.svg";
+import settingsIcon from "./img/settings.svg";
+import notListedIcon from "./img/notListed.svg";
+import repositionIcon from "./img/reposition.svg";
+import returnIcon from "./img/return.svg";
+import rideIcon from "./img/ride.svg";
+import homeIcon from "./img/home.svg";
+import offlineIcon from "./img/offline.svg";
+import whatsHotIcon from "./img/whatsHot.svg";
+import betaRideIcon from "./img/betaRide.svg";
+import groundedIcon from "./img/grounded.svg";
+import triageIcon from "./img/triage.svg";
+import otaIcon from "./img/ota.svg";
+
 const round = (n: number) => Math.round((n / 255) * 100) / 100;
 
 const hexToRgb = (hex: string) => {
@@ -6,8 +24,8 @@ const hexToRgb = (hex: string) => {
     ? [
         round(parseInt(result[1], 16)),
         round(parseInt(result[2], 16)),
-        round(parseInt(result[3], 16)),
-        1.0
+        round(parseInt(result[3], 16))
+        // 1.0
       ]
     : [0.0, 0.0, 0.0, 1.0];
 };
@@ -33,6 +51,78 @@ const possessions: {
   MRO: {
     name: "Skip",
     color: hexToRgb("#ff5555")
+  }
+};
+
+const actions: { [key: string]: { name: string; svg: string } } = {
+  BATTERYSWAP: {
+    name: "Battery Swap",
+    svg: batteryAlertIcon
+  },
+  CHARGE: {
+    name: "Charge",
+    svg: powerIcon
+  },
+  CHARGEANDRETURN: {
+    name: "Charge And Return",
+    svg: buildIcon
+  },
+  DEPLOY: {
+    name: "Deploy",
+
+    svg: gpsFixedIcon
+  },
+  INITIAL: {
+    name: "Initial",
+    svg: babyIcon
+  },
+  PROCESS: {
+    name: "Process",
+    svg: settingsIcon
+  },
+  RECOVER: {
+    name: "Recover",
+    svg: notListedIcon
+  },
+  REPOSITION: {
+    name: "Reposition",
+    svg: repositionIcon
+  },
+  RETURN: {
+    name: "Return",
+    svg: returnIcon
+  },
+  OVERHEATING: {
+    name: "Overheating",
+    svg: whatsHotIcon
+  },
+  RIDE: {
+    name: "Ride",
+    svg: rideIcon
+  },
+  STORE: {
+    name: "Store",
+    svg: homeIcon
+  },
+  WAIT: {
+    name: "Sleeping",
+    svg: offlineIcon
+  },
+  BETARIDE: {
+    name: "Beta Ride",
+    svg: betaRideIcon
+  },
+  GROUNDED: {
+    name: "Grounded",
+    svg: groundedIcon
+  },
+  TRIAGE: {
+    name: "Triage",
+    svg: triageIcon
+  },
+  OTA: {
+    name: "OTA",
+    svg: otaIcon
   }
 };
 

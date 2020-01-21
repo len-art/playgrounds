@@ -1948,6 +1948,11 @@ ansi-styles@^3.2.0, ansi-styles@^3.2.1:
   dependencies:
     color-convert "^1.9.0"
 
+ansi@~0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/ansi/-/ansi-0.2.1.tgz#3ab568ec18cd0ab7753c83117d57dad684a1c017"
+  integrity sha1-OrVo7BjNCrd1PIMRfVfa1oShwBc=
+
 ansicolors@~0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/ansicolors/-/ansicolors-0.2.1.tgz#be089599097b74a5c9c4a84a0cdbcdb62bd87aef"
@@ -6511,6 +6516,16 @@ lru-cache@^5.1.1:
   dependencies:
     yallist "^3.0.2"
 
+m4@^0.1.4:
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/m4/-/m4-0.1.4.tgz#7f6d87709ddaae8a4b9c611708ac025c244dd66b"
+  integrity sha512-ySaiPWZgcsRC0XmxDXOS81cE2PnsfjZ281dXfWQIuYDtHJeZFJ8BzG4WWDBDXOM5I2IDXL8rKaA0sSr5CbnkdA==
+  dependencies:
+    nopt "~2.2.0"
+    npmlog "0.0.6"
+    slide "~1.1.5"
+    sysexits "^1.0.0"
+
 make-dir@^2.0.0, make-dir@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/make-dir/-/make-dir-2.1.0.tgz#5f0310e18b8be898cc07009295a30ae41e91e6f5"
@@ -7082,6 +7097,13 @@ nopt@^4.0.1:
     abbrev "1"
     osenv "^0.1.4"
 
+nopt@~2.2.0:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/nopt/-/nopt-2.2.1.tgz#2aa09b7d1768487b3b89a9c5aa52335bff0baea7"
+  integrity sha1-KqCbfRdoSHs7ianFqlIzW/8Lrqc=
+  dependencies:
+    abbrev "1"
+
 normalize-package-data@^2.3.2:
   version "2.5.0"
   resolved "https://registry.yarnpkg.com/normalize-package-data/-/normalize-package-data-2.5.0.tgz#e66db1838b200c1dfc233225d12cb36520e234a8"
@@ -7143,6 +7165,13 @@ npm-run-path@^2.0.0:
   integrity sha1-NakjLfo11wZ7TLLd8jV7GHFTbF8=
   dependencies:
     path-key "^2.0.0"
+
+npmlog@0.0.6:
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/npmlog/-/npmlog-0.0.6.tgz#685043fe71aa1665d6e3b2acef180640caf40873"
+  integrity sha1-aFBD/nGqFmXW47Ks7xgGQMr0CHM=
+  dependencies:
+    ansi "~0.2.1"
 
 npmlog@^4.0.2:
   version "4.1.2"
@@ -9544,6 +9573,11 @@ slice-ansi@^2.1.0:
     astral-regex "^1.0.0"
     is-fullwidth-code-point "^2.0.0"
 
+slide@~1.1.5:
+  version "1.1.6"
+  resolved "https://registry.yarnpkg.com/slide/-/slide-1.1.6.tgz#56eb027d65b4d2dce6cb2e2d32c4d4afc9e1d707"
+  integrity sha1-VusCfWW00tzmyy4tMsTUr8nh1wc=
+
 snapdragon-node@^2.0.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/snapdragon-node/-/snapdragon-node-2.1.1.tgz#6c175f86ff14bdb0724563e8f3c1b021a286853b"
@@ -10027,6 +10061,11 @@ symbol-tree@^3.2.2:
   version "3.2.4"
   resolved "https://registry.yarnpkg.com/symbol-tree/-/symbol-tree-3.2.4.tgz#430637d248ba77e078883951fb9aa0eed7c63fa2"
   integrity sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==
+
+sysexits@^1.0.0:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/sysexits/-/sysexits-1.0.1.tgz#7699b7ff8fd80d050390c0a4a1f6135aa04cc746"
+  integrity sha1-dpm3/4/YDQUDkMCkofYTWqBMx0Y=
 
 table@^5.2.3:
   version "5.4.6"

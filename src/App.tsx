@@ -29,9 +29,8 @@ interface ExtendedLayer extends TestLayer {
   pinDetails: {
     aPosLocation: number;
     posBuffer: WebGLBuffer | null;
-    aColorLocation: number;
-    colorBuffer: WebGLBuffer | null;
     arraySize: number;
+    colorValues: number[];
   }[];
 }
 
@@ -76,6 +75,76 @@ const isPointInPolygon = ([x, y]: number[], vs: number[][]) =>
     }
     return acc;
   }, false);
+
+const loadImageAndCreateTextureInfo = (
+  gl: WebGL2RenderingContext,
+  url: string
+) => {
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+  const textureInfo = {
+    width: 1,
+    height: 1,
+    texture: tex
+  };
+  const img = new Image();
+  if (!img) {
+    return;
+  }
+  img.onload = () => {
+    textureInfo.width = img.width;
+    textureInfo.height = img.height;
+
+    gl.bindTexture(gl.TEXTURE_2D, textureInfo.texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+  };
+  // img.addEventListener("load", function() {
+  //   textureInfo.width = img.width;
+  //   textureInfo.height = img.height;
+
+  //   gl.bindTexture(gl.TEXTURE_2D, textureInfo.texture);
+  //   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+  // });
+  img.src = url;
+
+  return textureInfo;
+};
+
+// const drawImage = (gl: WebGL2RenderingContext, /*program: WebGLProgram, positionBuffer: WebGLBuffer, positionLocation: number, */ tex: WebGLTexture, texWidth: number, texHeight: number, dstX: number, dstY: number)  => {
+//   gl.bindTexture(gl.TEXTURE_2D, tex);
+
+//   // Setup the attributes to pull data from our buffers
+//   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+//   gl.enableVertexAttribArray(positionLocation);
+//   gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+//   gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
+//   gl.enableVertexAttribArray(texcoordLocation);
+//   gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
+
+//   // this matrix will convert from pixels to clip space
+//   var matrix = m4.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
+
+//   // this matrix will translate our quad to dstX, dstY
+//   matrix = m4.translate(matrix, dstX, dstY, 0);
+
+//   // this matrix will scale our 1 unit quad
+//   // from 1 unit to texWidth, texHeight units
+//   matrix = m4.scale(matrix, texWidth, texHeight, 1);
+
+//   // Set the matrix.
+//   gl.uniformMatrix4fv(matrixLocation, false, matrix);
+
+//   // Tell the shader to get the texture from texture unit 0
+//   gl.uniform1i(textureLocation, 0);
+
+//   // draw the quad (2 triangles, 6 vertices)
+//   gl.drawArrays(gl.TRIANGLES, 0, 6);
+// }
 
 export default class extends React.Component {
   highlightProgram: WebGLProgram | null = null;
@@ -165,26 +234,30 @@ export default class extends React.Component {
     pinDetails: [],
 
     onAdd: function(map: mapboxgl.Map, gl: WebGL2RenderingContext) {
+      console.log(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
       // create GLSL source for vertex shader
       const vertexSource = `
       uniform mat4 u_matrix;
+      uniform vec3 u_color;
       attribute vec2 a_pos;
-      attribute vec4 a_color;
-      varying vec4 color;
+      attribute vec3 a_color;
+
+      varying vec3 color;
 
       void main() {
         gl_Position = u_matrix * vec4(a_pos, 0.0, 1.0);
-        color = a_color;
+        // color = a_color;
+        color = u_color;
       }`;
 
       // create GLSL source for fragment shader
       const fragmentSource = `
       precision mediump float;
 
-      varying vec4 color;
+      varying vec3 color;
 
       void main() {
-        gl_FragColor = color;
+        gl_FragColor = vec4(color, 1.0);
       }`;
 
       // create a vertex shader
@@ -192,6 +265,10 @@ export default class extends React.Component {
       if (vertexShader) {
         gl.shaderSource(vertexShader, vertexSource);
         gl.compileShader(vertexShader);
+        const log = gl.getShaderInfoLog(vertexShader);
+        if (log && log.length) {
+          console.log("Vertex Shader Error", log);
+        }
       }
 
       // create a fragment shader
@@ -199,6 +276,10 @@ export default class extends React.Component {
       if (fragmentShader) {
         gl.shaderSource(fragmentShader, fragmentSource);
         gl.compileShader(fragmentShader);
+        const log = gl.getShaderInfoLog(fragmentShader);
+        if (log && log.length) {
+          console.log("Fragment Shader Error", log);
+        }
       }
 
       // link the two shaders into a WebGL program
@@ -216,16 +297,13 @@ export default class extends React.Component {
           return;
         }
         const aPosLocation = gl.getAttribLocation(this.program, "a_pos");
-        const aColorLocation = gl.getAttribLocation(this.program, "a_color");
 
         const projection = mapboxgl.MercatorCoordinate.fromLngLat(
           cluster.pins[0].location
         );
         const vertices = getPinVertices(projection);
-        const colors = Array.from(
-          new Array(vertices.length),
-          () => data.possessions[cluster.pins[0].possessionType].color
-        );
+        const colorValues =
+          data.possessions[cluster.pins[0].possessionType].color;
 
         const posBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
@@ -235,23 +313,16 @@ export default class extends React.Component {
           gl.STATIC_DRAW
         );
 
-        const colorBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          new Float32Array(colors.flat()),
-          gl.STATIC_DRAW
-        );
-
         this.pinDetails.push({
           aPosLocation,
-          aColorLocation,
           posBuffer,
-          colorBuffer,
+          colorValues,
           arraySize: vertices.length
         });
       });
       clusterSize = this.pinDetails.length;
+
+      /* textures */
     },
     render: function(gl: WebGL2RenderingContext, matrix: Iterable<number>) {
       gl.useProgram(this.program);
@@ -263,15 +334,20 @@ export default class extends React.Component {
         );
       }
       this.pinDetails.forEach(pd => {
+        if (!this.program) {
+          return false;
+        }
         gl.bindBuffer(gl.ARRAY_BUFFER, pd.posBuffer);
 
         gl.vertexAttribPointer(pd.aPosLocation, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(pd.aPosLocation);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, pd.colorBuffer);
-
-        gl.vertexAttribPointer(pd.aColorLocation, 4, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(pd.aColorLocation);
+        gl.uniform3f(
+          gl.getUniformLocation(this.program, "u_color"),
+          pd.colorValues[0],
+          pd.colorValues[1],
+          pd.colorValues[2]
+        );
 
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
