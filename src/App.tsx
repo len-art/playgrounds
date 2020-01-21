@@ -337,11 +337,13 @@ export default class extends React.Component {
         if (!this.program) {
           return false;
         }
+        /* bind and use vertex buffer */
         gl.bindBuffer(gl.ARRAY_BUFFER, pd.posBuffer);
 
         gl.vertexAttribPointer(pd.aPosLocation, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(pd.aPosLocation);
 
+        /* set uniform color variable */
         gl.uniform3f(
           gl.getUniformLocation(this.program, "u_color"),
           pd.colorValues[0],
@@ -349,8 +351,8 @@ export default class extends React.Component {
           pd.colorValues[2]
         );
 
-        gl.enable(gl.BLEND);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        // gl.enable(gl.BLEND);
+        // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.drawArrays(gl.TRIANGLE_FAN, 0, pd.arraySize);
       });
     }
