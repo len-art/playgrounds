@@ -27,7 +27,8 @@ interface ExtendedLayer extends TestLayer {
   pinShapeBuffer: WebGLBuffer | null;
   tempTexture: WebGLTexture | null;
   tempTextureLoc: WebGLUniformLocation | null;
-  textureCoordBuffer: WebGLTexture | null;
+  iconMapBuffer: WebGLTexture | null;
+  iconMapLoc: number;
 
   pinDetails: {
     aPosLocation: number;
@@ -195,22 +196,23 @@ export default class extends React.Component {
     pinShapeBuffer: null,
     pinDetails: [],
     tempTexture: null,
-    textureCoordBuffer: null,
+    iconMapBuffer: null,
     tempTextureLoc: 0,
+    iconMapLoc: 0,
 
     onAdd: function(map: mapboxgl.Map, gl: WebGL2RenderingContext) {
       /* GLSL source for vertex shader */
       const vertexSource = `
       uniform mat4 u_matrix;
-
+      
+      attribute vec2 a_iconMap;
       attribute vec2 a_pos;
-      attribute vec2 a_iconCoord;
 
       varying vec2 v_iconCoord;
 
       void main() {
         gl_Position = u_matrix * vec4(a_pos, 0.0, 1.0);
-        v_iconCoord = a_iconCoord;
+        v_iconCoord = a_iconMap;
       }`;
 
       /* GLSL source for fragment shader */
@@ -266,6 +268,10 @@ export default class extends React.Component {
         gl.linkProgram(this.program);
       }
 
+      if (!this.program) {
+        return;
+      }
+
       this.pinDetails = [];
 
       data.pins.forEach(cluster => {
@@ -304,14 +310,12 @@ export default class extends React.Component {
         });
       });
 
-      /* textures */
-      // Create a new "texture object"
-      if (this.program) {
-        this.tempTextureLoc = gl.getUniformLocation(
-          this.program,
-          "u_iconTexture"
-        );
-      }
+      /* icons */
+      this.tempTextureLoc = gl.getUniformLocation(
+        this.program,
+        "u_iconTexture"
+      );
+
       this.tempTexture = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, this.tempTexture);
       const level = 0;
@@ -350,8 +354,11 @@ export default class extends React.Component {
       };
       image.src = require("./img/baby.svg");
 
-      this.textureCoordBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.textureCoordBuffer);
+      /* icon map */
+      this.iconMapLoc = gl.getAttribLocation(this.program, "a_iconMap");
+
+      this.iconMapBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.iconMapBuffer);
 
       const textureMapping = [
         [0.5, 0.2],
@@ -394,19 +401,10 @@ export default class extends React.Component {
         gl.enableVertexAttribArray(pd.aPosLocation);
 
         /* icon texture map */
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.textureCoordBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.iconMapBuffer);
 
-        gl.vertexAttribPointer(
-          gl.getAttribLocation(this.program, "a_iconCoord"),
-          2,
-          gl.FLOAT,
-          false,
-          0,
-          0
-        );
-        gl.enableVertexAttribArray(
-          gl.getAttribLocation(this.program, "a_iconCoord")
-        );
+        gl.vertexAttribPointer(this.iconMapLoc, 2, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(this.iconMapLoc);
 
         /* bg 1x1 texture */
         gl.uniform1i(pd.uTexLocation, 0);
