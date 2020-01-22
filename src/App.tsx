@@ -25,16 +25,19 @@ interface TestLayer extends mapboxgl.CustomLayerInterface {
 interface ExtendedLayer extends TestLayer {
   aPinShapeLocation: number;
   pinShapeBuffer: WebGLBuffer | null;
+  tempTexture: WebGLTexture | null;
+  tempTextureLoc: WebGLUniformLocation | null;
+  textureCoordBuffer: WebGLTexture | null;
 
   pinDetails: {
     aPosLocation: number;
     posBuffer: WebGLBuffer | null;
     arraySize: number;
     colorValues: number[];
+    bgTexBuffer: WebGLTexture | null;
+    uTexLocation: WebGLUniformLocation | null;
   }[];
 }
-
-let clusterSize = 0;
 
 const getPinVertices = (loc: mapboxgl.MercatorCoordinate) => {
   const mercatorRadius = 0.000006;
@@ -76,75 +79,30 @@ const isPointInPolygon = ([x, y]: number[], vs: number[][]) =>
     return acc;
   }, false);
 
-const loadImageAndCreateTextureInfo = (
-  gl: WebGL2RenderingContext,
-  url: string
-) => {
-  const tex = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, tex);
+const createBgTexture = (gl: WebGL2RenderingContext, color: number[]) => {
+  /* creates 1x1 texture for pin background */
+  const tempTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tempTexture);
 
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  const level = 0;
+  const internalFormat = gl.RGBA;
+  const srcFormat = gl.RGBA;
+  const srcType = gl.UNSIGNED_BYTE;
+  const pixel = new Uint8Array([color[0], color[1], color[2], 255]);
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    level,
+    internalFormat,
+    1,
+    1,
+    0,
+    srcFormat,
+    srcType,
+    pixel
+  );
 
-  const textureInfo = {
-    width: 1,
-    height: 1,
-    texture: tex
-  };
-  const img = new Image();
-  if (!img) {
-    return;
-  }
-  img.onload = () => {
-    textureInfo.width = img.width;
-    textureInfo.height = img.height;
-
-    gl.bindTexture(gl.TEXTURE_2D, textureInfo.texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-  };
-  // img.addEventListener("load", function() {
-  //   textureInfo.width = img.width;
-  //   textureInfo.height = img.height;
-
-  //   gl.bindTexture(gl.TEXTURE_2D, textureInfo.texture);
-  //   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-  // });
-  img.src = url;
-
-  return textureInfo;
+  return tempTexture;
 };
-
-// const drawImage = (gl: WebGL2RenderingContext, /*program: WebGLProgram, positionBuffer: WebGLBuffer, positionLocation: number, */ tex: WebGLTexture, texWidth: number, texHeight: number, dstX: number, dstY: number)  => {
-//   gl.bindTexture(gl.TEXTURE_2D, tex);
-
-//   // Setup the attributes to pull data from our buffers
-//   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-//   gl.enableVertexAttribArray(positionLocation);
-//   gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-//   gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-//   gl.enableVertexAttribArray(texcoordLocation);
-//   gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
-
-//   // this matrix will convert from pixels to clip space
-//   var matrix = m4.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
-
-//   // this matrix will translate our quad to dstX, dstY
-//   matrix = m4.translate(matrix, dstX, dstY, 0);
-
-//   // this matrix will scale our 1 unit quad
-//   // from 1 unit to texWidth, texHeight units
-//   matrix = m4.scale(matrix, texWidth, texHeight, 1);
-
-//   // Set the matrix.
-//   gl.uniformMatrix4fv(matrixLocation, false, matrix);
-
-//   // Tell the shader to get the texture from texture unit 0
-//   gl.uniform1i(textureLocation, 0);
-
-//   // draw the quad (2 triangles, 6 vertices)
-//   gl.drawArrays(gl.TRIANGLES, 0, 6);
-// }
 
 export default class extends React.Component {
   highlightProgram: WebGLProgram | null = null;
@@ -154,6 +112,10 @@ export default class extends React.Component {
   mapContainer = React.createRef<HTMLDivElement>();
 
   map?: mapboxgl.Map;
+
+  state = {
+    image: undefined
+  };
 
   componentDidMount() {
     if (this.mapContainer.current) {
@@ -232,53 +194,67 @@ export default class extends React.Component {
     aPinShapeLocation: 0,
     pinShapeBuffer: null,
     pinDetails: [],
+    tempTexture: null,
+    textureCoordBuffer: null,
+    tempTextureLoc: 0,
 
     onAdd: function(map: mapboxgl.Map, gl: WebGL2RenderingContext) {
-      console.log(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
-      // create GLSL source for vertex shader
+      /* GLSL source for vertex shader */
       const vertexSource = `
       uniform mat4 u_matrix;
-      uniform vec3 u_color;
-      attribute vec2 a_pos;
-      attribute vec3 a_color;
 
-      varying vec3 color;
+      attribute vec2 a_pos;
+      attribute vec2 a_iconCoord;
+
+      varying vec2 v_iconCoord;
 
       void main() {
         gl_Position = u_matrix * vec4(a_pos, 0.0, 1.0);
-        // color = a_color;
-        color = u_color;
+        v_iconCoord = a_iconCoord;
       }`;
 
-      // create GLSL source for fragment shader
+      /* GLSL source for fragment shader */
       const fragmentSource = `
       precision mediump float;
 
-      varying vec3 color;
+      uniform sampler2D u_bgTexture;
+      uniform sampler2D u_iconTexture;
+
+      varying vec2 v_iconCoord;
 
       void main() {
-        gl_FragColor = vec4(color, 1.0);
+        vec4 bgColor = texture2D(u_bgTexture, vec2(0.0, 0.0));
+        vec4 iconColor = texture2D(u_iconTexture, v_iconCoord);
+
+        if (iconColor.a == 0.0 || v_iconCoord.x < 0.0 ||
+          v_iconCoord.y < 0.0 ||
+          v_iconCoord.x > 1.0 ||
+          v_iconCoord.y > 1.0) {
+          gl_FragColor = bgColor;
+        } else {
+          gl_FragColor = bgColor * iconColor;
+        }
       }`;
 
-      // create a vertex shader
+      /* create a vertex shader */
       const vertexShader = gl.createShader(gl.VERTEX_SHADER);
       if (vertexShader) {
         gl.shaderSource(vertexShader, vertexSource);
         gl.compileShader(vertexShader);
         const log = gl.getShaderInfoLog(vertexShader);
         if (log && log.length) {
-          console.log("Vertex Shader Error", log);
+          console.error("Vertex Shader Error", log);
         }
       }
 
-      // create a fragment shader
+      /* create a fragment shader */
       const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
       if (fragmentShader) {
         gl.shaderSource(fragmentShader, fragmentSource);
         gl.compileShader(fragmentShader);
         const log = gl.getShaderInfoLog(fragmentShader);
         if (log && log.length) {
-          console.log("Fragment Shader Error", log);
+          console.error("Fragment Shader Error", log);
         }
       }
 
@@ -297,13 +273,16 @@ export default class extends React.Component {
           return;
         }
         const aPosLocation = gl.getAttribLocation(this.program, "a_pos");
+        // we should store all bg textures to buffers only once as uniforms
+        //  and only link to the appropriate buffer here
+        const uTexLocation = gl.getUniformLocation(this.program, "u_bgTexture");
 
         const projection = mapboxgl.MercatorCoordinate.fromLngLat(
           cluster.pins[0].location
         );
         const vertices = getPinVertices(projection);
         const colorValues =
-          data.possessions[cluster.pins[0].possessionType].color;
+          data.possessions[cluster.pins[0].possessionType].rgbColor;
 
         const posBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
@@ -313,26 +292,97 @@ export default class extends React.Component {
           gl.STATIC_DRAW
         );
 
+        const bgTexBuffer = createBgTexture(gl, colorValues);
+
         this.pinDetails.push({
           aPosLocation,
           posBuffer,
           colorValues,
-          arraySize: vertices.length
+          arraySize: vertices.length,
+          bgTexBuffer,
+          uTexLocation
         });
       });
-      clusterSize = this.pinDetails.length;
 
       /* textures */
+      // Create a new "texture object"
+      if (this.program) {
+        this.tempTextureLoc = gl.getUniformLocation(
+          this.program,
+          "u_iconTexture"
+        );
+      }
+      this.tempTexture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, this.tempTexture);
+      const level = 0;
+      const internalFormat = gl.RGBA;
+      const srcFormat = gl.RGBA;
+      const srcType = gl.UNSIGNED_BYTE;
+      const pixel = new Uint8Array([255, 0, 255, 255]);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        level,
+        internalFormat,
+        1,
+        1,
+        0,
+        srcFormat,
+        srcType,
+        pixel
+      );
+
+      const image = new Image();
+      image.onload = () => {
+        image.width = 128;
+        image.height = 128;
+
+        gl.bindTexture(gl.TEXTURE_2D, this.tempTexture);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          level,
+          internalFormat,
+          srcFormat,
+          srcType,
+          image
+        );
+        gl.generateMipmap(gl.TEXTURE_2D);
+      };
+      image.src = require("./img/baby.svg");
+
+      this.textureCoordBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.textureCoordBuffer);
+
+      const textureMapping = [
+        [0.5, 0.2],
+        [0.5, 2],
+        [1.5, 1.2],
+        [2, 0.2],
+        [1.5, -1.2],
+        [0.5, -3],
+        [-1.5, -1.2],
+        [-2, 0.2],
+        [-1.5, 1.2],
+        [0.5, 2]
+      ];
+
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(textureMapping.flat()),
+        gl.STATIC_DRAW
+      );
     },
     render: function(gl: WebGL2RenderingContext, matrix: Iterable<number>) {
       gl.useProgram(this.program);
-      if (this.program) {
-        gl.uniformMatrix4fv(
-          gl.getUniformLocation(this.program, "u_matrix"),
-          false,
-          matrix
-        );
+      if (!this.program) {
+        return;
       }
+      gl.uniformMatrix4fv(
+        gl.getUniformLocation(this.program, "u_matrix"),
+        false,
+        matrix
+      );
+
       this.pinDetails.forEach(pd => {
         if (!this.program) {
           return false;
@@ -343,134 +393,35 @@ export default class extends React.Component {
         gl.vertexAttribPointer(pd.aPosLocation, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(pd.aPosLocation);
 
-        /* set uniform color variable */
-        gl.uniform3f(
-          gl.getUniformLocation(this.program, "u_color"),
-          pd.colorValues[0],
-          pd.colorValues[1],
-          pd.colorValues[2]
+        /* icon texture map */
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.textureCoordBuffer);
+
+        gl.vertexAttribPointer(
+          gl.getAttribLocation(this.program, "a_iconCoord"),
+          2,
+          gl.FLOAT,
+          false,
+          0,
+          0
         );
+        gl.enableVertexAttribArray(
+          gl.getAttribLocation(this.program, "a_iconCoord")
+        );
+
+        /* bg 1x1 texture */
+        gl.uniform1i(pd.uTexLocation, 0);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, pd.bgTexBuffer);
+
+        /* icon texture */
+        gl.uniform1i(this.tempTextureLoc, 1);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, this.tempTexture);
 
         // gl.enable(gl.BLEND);
         // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.drawArrays(gl.TRIANGLE_FAN, 0, pd.arraySize);
       });
-    }
-  };
-
-  testLayer: TestLayer = {
-    id: "testVehs",
-    type: "custom",
-    program: null,
-    aPosLocation: 0,
-    aColorLocation: 0,
-    vertexBuffer: null,
-    colorBuffer: null,
-
-    onAdd: function(map: mapboxgl.Map, gl: WebGL2RenderingContext) {
-      // create GLSL source for vertex shader
-      const vertexSource = `
-      uniform mat4 u_matrix;
-      attribute vec2 a_pos;
-      attribute vec4 a_color;
-      varying vec4 color;
-
-      void main() {
-        gl_Position = u_matrix * vec4(a_pos, 0.0, 1.0);
-        gl_PointSize = 20.0;
-        color = a_color;
-      }`;
-
-      // create GLSL source for fragment shader
-      const fragmentSource = `
-      precision mediump float;
-
-      varying vec4 color;
-
-      void main() {
-        gl_FragColor = color;
-      }`;
-
-      // create a vertex shader
-      const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-      if (vertexShader) {
-        gl.shaderSource(vertexShader, vertexSource);
-        gl.compileShader(vertexShader);
-      }
-
-      // create a fragment shader
-      const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-      if (fragmentShader) {
-        gl.shaderSource(fragmentShader, fragmentSource);
-        gl.compileShader(fragmentShader);
-      }
-
-      // link the two shaders into a WebGL program
-      this.program = gl.createProgram();
-      if (this.program && vertexShader && fragmentShader) {
-        gl.attachShader(this.program, vertexShader);
-        gl.attachShader(this.program, fragmentShader);
-        gl.linkProgram(this.program);
-
-        this.aPosLocation = gl.getAttribLocation(this.program, "a_pos");
-        this.aColorLocation = gl.getAttribLocation(this.program, "a_color");
-      }
-
-      const { locations, colors } = data.pins.reduce(
-        (acc: { locations: number[][]; colors: number[][] }, cluster) => {
-          const l = mapboxgl.MercatorCoordinate.fromLngLat(
-            cluster.pins[0].location
-          );
-          acc.locations.push([l.x, l.y]);
-          acc.colors.push(
-            data.possessions[cluster.pins[0].possessionType].color
-          );
-          return acc;
-        },
-        { locations: [], colors: [] }
-      );
-      clusterSize = locations.length;
-
-      this.vertexBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array(locations.flat()),
-        gl.STATIC_DRAW
-      );
-
-      this.colorBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array(colors.flat()),
-        gl.STATIC_DRAW
-      );
-    },
-    render: function(gl: WebGL2RenderingContext, matrix: Iterable<number>) {
-      gl.useProgram(this.program);
-      if (this.program) {
-        gl.uniformMatrix4fv(
-          gl.getUniformLocation(this.program, "u_matrix"),
-          false,
-          matrix
-        );
-      }
-      /* vertices */
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-
-      gl.vertexAttribPointer(this.aPosLocation, 2, gl.FLOAT, false, 0, 0);
-      gl.enableVertexAttribArray(this.aPosLocation);
-
-      /* colors */
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-
-      gl.vertexAttribPointer(this.aColorLocation, 4, gl.FLOAT, false, 0, 0);
-      gl.enableVertexAttribArray(this.aColorLocation);
-
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      gl.drawArrays(gl.POINTS, 0, clusterSize);
     }
   };
 

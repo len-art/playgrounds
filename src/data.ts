@@ -16,41 +16,56 @@ import groundedIcon from "./img/grounded.svg";
 import triageIcon from "./img/triage.svg";
 import otaIcon from "./img/ota.svg";
 
-const round = (n: number) => Math.round((n / 255) * 100) / 100;
+const floatFrom8Bit = (n: number) => Math.round((n / 255) * 100) / 100;
+
+const hexToFloat = (hex: string) => {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? [
+        floatFrom8Bit(parseInt(result[1], 16)),
+        floatFrom8Bit(parseInt(result[2], 16)),
+        floatFrom8Bit(parseInt(result[3], 16))
+      ]
+    : [0.0, 0.0, 0.0, 1.0];
+};
 
 const hexToRgb = (hex: string) => {
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? [
-        round(parseInt(result[1], 16)),
-        round(parseInt(result[2], 16)),
-        round(parseInt(result[3], 16))
-        // 1.0
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16)
       ]
-    : [0.0, 0.0, 0.0, 1.0];
+    : [0, 0, 0, 1];
 };
 
 const possessions: {
   [key: string]: {
     name: string;
-    color: number[];
+    fColor: number[];
+    rgbColor: number[];
   };
 } = {
   FIELD: {
     name: "Field",
-    color: hexToRgb("#333333")
+    fColor: hexToFloat("#333333"),
+    rgbColor: hexToRgb("#333333")
   },
   RANGER: {
     name: "Ranger",
-    color: hexToRgb("#0C97FF")
+    fColor: hexToFloat("#0C97FF"),
+    rgbColor: hexToRgb("#0C97FF")
   },
   RIDER: {
     name: "Rider",
-    color: hexToRgb("#2cbe4e")
+    fColor: hexToFloat("#2cbe4e"),
+    rgbColor: hexToRgb("#2cbe4e")
   },
   MRO: {
     name: "Skip",
-    color: hexToRgb("#ff5555")
+    fColor: hexToFloat("#ff5555"),
+    rgbColor: hexToRgb("#ff5555")
   }
 };
 
