@@ -22,21 +22,31 @@ interface TestLayer extends mapboxgl.CustomLayerInterface {
   type: any;
 }
 
+interface PinBackgroundTex {
+  texLoc: WebGLUniformLocation | null;
+  texBuffer: WebGLTexture | null;
+}
+
+interface PinIconTex {
+  texLoc: WebGLUniformLocation | null;
+  texBuffer: WebGLTexture | null;
+}
+
 interface ExtendedLayer extends TestLayer {
   aPinShapeLocation: number;
   pinShapeBuffer: WebGLBuffer | null;
-  tempTexture: WebGLTexture | null;
-  tempTextureLoc: WebGLUniformLocation | null;
   iconMapBuffer: WebGLTexture | null;
   iconMapLoc: number;
+
+  pinBackgroundTex: Record<string, PinBackgroundTex>;
+  pinIconTex: Record<string, PinIconTex>;
 
   pinDetails: {
     aPosLocation: number;
     posBuffer: WebGLBuffer | null;
     arraySize: number;
-    colorValues: number[];
-    bgTexBuffer: WebGLTexture | null;
-    uTexLocation: WebGLUniformLocation | null;
+    possessionKey: string;
+    actionKey: string;
   }[];
 }
 
@@ -194,10 +204,10 @@ export default class extends React.Component {
     colorBuffer: null,
     aPinShapeLocation: 0,
     pinShapeBuffer: null,
+    pinBackgroundTex: {},
+    pinIconTex: {},
     pinDetails: [],
-    tempTexture: null,
     iconMapBuffer: null,
-    tempTextureLoc: 0,
     iconMapLoc: 0,
 
     onAdd: function(map: mapboxgl.Map, gl: WebGL2RenderingContext) {
@@ -234,7 +244,7 @@ export default class extends React.Component {
           v_iconCoord.y > 1.0) {
           gl_FragColor = bgColor;
         } else {
-          gl_FragColor = bgColor * iconColor;
+          gl_FragColor = bgColor * vec4(255, 255, 255, 255);
         }
       }`;
 
@@ -272,23 +282,82 @@ export default class extends React.Component {
         return;
       }
 
+      this.pinBackgroundTex = {};
       this.pinDetails = [];
+
+      /* background textures */
+      this.pinBackgroundTex = Object.keys(data.possessions).reduce(
+        (acc: Record<string, PinBackgroundTex>, possessionKey) => {
+          if (!this.program) {
+            return acc;
+          }
+          const colorValues = data.possessions[possessionKey].rgbColor;
+
+          const uTexLoc = gl.getUniformLocation(this.program, "u_bgTexture");
+
+          const texBuffer = createBgTexture(gl, colorValues);
+
+          acc[possessionKey] = { texLoc: uTexLoc, texBuffer };
+
+          return acc;
+        },
+        {}
+      );
+
+      /* icon textures */
+      const level = 0;
+      const internalFormat = gl.RGBA;
+      const srcFormat = gl.RGBA;
+      const srcType = gl.UNSIGNED_BYTE;
+
+      this.pinIconTex = Object.keys(data.actions).reduce(
+        (acc: Record<string, PinIconTex>, actionKey) => {
+          if (!this.program) {
+            return acc;
+          }
+          const action = data.actions[actionKey];
+
+          const texLoc = gl.getUniformLocation(this.program, "u_iconTexture");
+
+          const texBuffer = createBgTexture(gl, [255, 0, 255, 255]);
+
+          const image = new Image();
+          image.onload = () => {
+            image.width = 128;
+            image.height = 128;
+
+            gl.bindTexture(gl.TEXTURE_2D, texBuffer);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+            gl.texImage2D(
+              gl.TEXTURE_2D,
+              level,
+              internalFormat,
+              srcFormat,
+              srcType,
+              image
+            );
+            gl.generateMipmap(gl.TEXTURE_2D);
+          };
+          image.onerror = console.error;
+          image.src = action.svg;
+
+          acc[actionKey] = { texLoc, texBuffer };
+
+          return acc;
+        },
+        {}
+      );
 
       data.pins.forEach(cluster => {
         if (!this.program) {
           return;
         }
         const aPosLocation = gl.getAttribLocation(this.program, "a_pos");
-        // we should store all bg textures to buffers only once as uniforms
-        //  and only link to the appropriate buffer here
-        const uTexLocation = gl.getUniformLocation(this.program, "u_bgTexture");
 
         const projection = mapboxgl.MercatorCoordinate.fromLngLat(
           cluster.pins[0].location
         );
         const vertices = getPinVertices(projection);
-        const colorValues =
-          data.possessions[cluster.pins[0].possessionType].rgbColor;
 
         const posBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
@@ -298,63 +367,16 @@ export default class extends React.Component {
           gl.STATIC_DRAW
         );
 
-        const bgTexBuffer = createBgTexture(gl, colorValues);
-
         this.pinDetails.push({
           aPosLocation,
           posBuffer,
-          colorValues,
           arraySize: vertices.length,
-          bgTexBuffer,
-          uTexLocation
+          possessionKey: cluster.pins[0].possessionType,
+          actionKey: cluster.pins[0].action
         });
       });
 
-      /* icons */
-      this.tempTextureLoc = gl.getUniformLocation(
-        this.program,
-        "u_iconTexture"
-      );
-
-      this.tempTexture = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, this.tempTexture);
-      const level = 0;
-      const internalFormat = gl.RGBA;
-      const srcFormat = gl.RGBA;
-      const srcType = gl.UNSIGNED_BYTE;
-      const pixel = new Uint8Array([255, 0, 255, 255]);
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        level,
-        internalFormat,
-        1,
-        1,
-        0,
-        srcFormat,
-        srcType,
-        pixel
-      );
-
-      const image = new Image();
-      image.onload = () => {
-        image.width = 128;
-        image.height = 128;
-
-        gl.bindTexture(gl.TEXTURE_2D, this.tempTexture);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
-        gl.texImage2D(
-          gl.TEXTURE_2D,
-          level,
-          internalFormat,
-          srcFormat,
-          srcType,
-          image
-        );
-        gl.generateMipmap(gl.TEXTURE_2D);
-      };
-      image.src = require("./img/baby.svg");
-
-      /* icon map */
+      /* pin icon map */
       this.iconMapLoc = gl.getAttribLocation(this.program, "a_iconMap");
 
       this.iconMapBuffer = gl.createBuffer();
@@ -407,14 +429,16 @@ export default class extends React.Component {
         gl.enableVertexAttribArray(this.iconMapLoc);
 
         /* bg 1x1 texture */
-        gl.uniform1i(pd.uTexLocation, 0);
+        const backgroundTex = this.pinBackgroundTex[pd.possessionKey];
+        gl.uniform1i(backgroundTex.texLoc, 0);
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, pd.bgTexBuffer);
+        gl.bindTexture(gl.TEXTURE_2D, backgroundTex.texBuffer);
 
         /* icon texture */
-        gl.uniform1i(this.tempTextureLoc, 1);
+        const iconTex = this.pinIconTex[pd.actionKey];
+        gl.uniform1i(iconTex.texLoc, 1);
         gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, this.tempTexture);
+        gl.bindTexture(gl.TEXTURE_2D, iconTex.texBuffer);
 
         // gl.enable(gl.BLEND);
         // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);

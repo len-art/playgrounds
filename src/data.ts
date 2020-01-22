@@ -1,6 +1,6 @@
 import batteryAlertIcon from "./img/batteryAlert.svg";
-import babyIcon from "./img/baby.svg";
 import powerIcon from "./img/power.svg";
+import babyIcon from "./img/baby.svg";
 import buildIcon from "./img/build.svg";
 import gpsFixedIcon from "./img/gpsFixed.svg";
 import settingsIcon from "./img/settings.svg";
@@ -63,81 +63,99 @@ const possessions: {
     rgbColor: hexToRgb("#2cbe4e")
   },
   MRO: {
-    name: "Skip",
+    name: "Mro",
     fColor: hexToFloat("#ff5555"),
     rgbColor: hexToRgb("#ff5555")
   }
 };
 
-const actions: { [key: string]: { name: string; svg: string } } = {
+const actions: {
+  [key: string]: { name: string; svg: string; path: string };
+} = {
   BATTERYSWAP: {
     name: "Battery Swap",
-    svg: batteryAlertIcon
+    svg: batteryAlertIcon,
+    path: "./img/batteryAlert.svg"
   },
   CHARGE: {
     name: "Charge",
-    svg: powerIcon
+    svg: powerIcon,
+    path: "./img/power.svg"
   },
   CHARGEANDRETURN: {
     name: "Charge And Return",
-    svg: buildIcon
+    svg: buildIcon,
+    path: "./img/build.svg"
   },
   DEPLOY: {
     name: "Deploy",
-
-    svg: gpsFixedIcon
+    svg: gpsFixedIcon,
+    path: "./img/gpsFixed.svg"
   },
   INITIAL: {
     name: "Initial",
-    svg: babyIcon
+    svg: babyIcon,
+    path: "./img/gpsFixed.svg"
   },
   PROCESS: {
     name: "Process",
-    svg: settingsIcon
+    svg: settingsIcon,
+    path: "./img/gpsFixed.svg"
   },
   RECOVER: {
     name: "Recover",
-    svg: notListedIcon
+    svg: notListedIcon,
+    path: "./img/gpsFixed.svg"
   },
   REPOSITION: {
     name: "Reposition",
-    svg: repositionIcon
+    svg: repositionIcon,
+    path: "./img/gpsFixed.svg"
   },
   RETURN: {
     name: "Return",
-    svg: returnIcon
+    svg: returnIcon,
+    path: "./img/gpsFixed.svg"
   },
   OVERHEATING: {
     name: "Overheating",
-    svg: whatsHotIcon
+    svg: whatsHotIcon,
+    path: "./img/gpsFixed.svg"
   },
   RIDE: {
     name: "Ride",
-    svg: rideIcon
+    svg: rideIcon,
+    path: "./img/gpsFixed.svg"
   },
   STORE: {
     name: "Store",
-    svg: homeIcon
+    svg: homeIcon,
+    path: "./img/gpsFixed.svg"
   },
   WAIT: {
     name: "Sleeping",
-    svg: offlineIcon
+    svg: offlineIcon,
+    path: "./img/gpsFixed.svg"
   },
   BETARIDE: {
     name: "Beta Ride",
-    svg: betaRideIcon
+    svg: betaRideIcon,
+    path: "./img/gpsFixed.svg"
   },
   GROUNDED: {
     name: "Grounded",
-    svg: groundedIcon
+    svg: groundedIcon,
+    path: "./img/gpsFixed.svg"
   },
   TRIAGE: {
     name: "Triage",
-    svg: triageIcon
+    svg: triageIcon,
+    path: "./img/gpsFixed.svg"
   },
   OTA: {
     name: "OTA",
-    svg: otaIcon
+    svg: otaIcon,
+    path: "./img/gpsFixed.svg"
   }
 };
 
@@ -14118,4 +14136,4 @@ const pins: PinCluster[] = [
   }
 ];
 
-export default { pins, possessions };
+export default { pins, possessions, actions };
