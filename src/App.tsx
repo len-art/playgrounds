@@ -7,8 +7,6 @@ import pin from "./obj/pin";
 
 import data, { PinCluster } from "./data";
 
-const mesh = new OBJ.Mesh(pin);
-
 const mapsConfig = {
   mapboxKey:
     "pk.eyJ1IjoibWlrZXdhZGhlcmEiLCJhIjoiY2prMGp1cXZmMDdrNzNxb2c4aG0yN2RwciJ9.l9HDsogzG93aM4VMmL5PbA",
@@ -55,58 +53,27 @@ interface ExtendedLayer extends TestLayer {
   }[];
 }
 
+const group1dto2d = (n: number[]) =>
+  n.reduce((a: number[][], v, i) => {
+    if (i % 2) {
+      a[a.length - 1][1] = v;
+    } else {
+      a.push([v]);
+    }
+    return a;
+  }, []);
+
+const mesh = new OBJ.Mesh(pin);
+const pinVertices = group1dto2d(
+  mesh.vertices.filter((v, i) => (i + 1) % 3 !== 0)
+);
+const pinTextureMap = group1dto2d(mesh.textures);
+
 const getPinVertices = (loc: mapboxgl.MercatorCoordinate) => {
-  const r = 0.000006;
+  const r = 0.000009;
   const c = [loc.x, loc.y - r];
 
-  const manuallyWrittenVertices = [
-    // c,
-    [c[0], c[1] - r],
-    [c[0] + r / 1.5, c[1] - r / 1.5],
-    [c[0] + r, c[1]],
-    [c[0] + r / 1.5, c[1] + r / 1.5],
-    [c[0], c[1] + r * 1.2],
-    [c[0] - r / 1.5, c[1] + r / 1.5],
-    [c[0] - r, c[1]],
-    [c[0] - r / 1.5, c[1] - r / 1.5],
-    [c[0], c[1] - r]
-  ];
-  return manuallyWrittenVertices;
-
-  const normalizedVertices = [
-    [1.0, 0.0],
-    [0.707107, -0.707107],
-    [0.0, -1.0],
-    [-0.707107, -0.707107],
-    [-1.0, 0.0],
-    [-0.707106, 0.707107],
-    [0.000001, 1.25743],
-    [0.707108, 0.707106],
-    [1.0, 0.0]
-  ];
-  const normalizedHiResVertices = [
-    [0.0, -1.0],
-    [-0.382683, -0.92388],
-    [-0.707107, -0.707107],
-    [-0.92388, -0.382683],
-    [-1.0, -0.0],
-    [-0.92388, 0.382683],
-    [-0.707107, 0.707107],
-    [-0.382683, 0.92388],
-    [0.0, 1.0],
-    [0.382684, 0.923879],
-    [0.707107, 0.707106],
-    [0.92388, 0.382683],
-    [1.25743, -0.000001],
-    [0.923879, -0.382684],
-    [0.707106, -0.707108],
-    [0.382682, -0.92388]
-  ];
-
-  const vertices = normalizedHiResVertices.map(v => [
-    c[0] + r * v[0],
-    c[1] + r * v[1]
-  ]);
+  const vertices = pinVertices.map(v => [c[0] + r * v[0], c[1] + r * v[1]]);
 
   return vertices;
 };
@@ -287,7 +254,7 @@ export default class extends React.Component {
           v_iconCoord.y > 1.0) {
           gl_FragColor = bgColor;
         } else {
-          gl_FragColor = bgColor * vec4(255, 255, 255, 255);
+          gl_FragColor = iconColor;
         }
       }`;
 
@@ -312,6 +279,9 @@ export default class extends React.Component {
           console.error("Fragment Shader Error", log);
         }
       }
+
+      // const pinMeshData = OBJ.initMeshBuffers(gl, mesh);
+      // console.log(pinMeshData, pinMeshData.vertexBuffer);
 
       // link the two shaders into a WebGL program
       this.program = gl.createProgram();
@@ -366,8 +336,8 @@ export default class extends React.Component {
 
           const image = new Image();
           image.onload = () => {
-            image.width = 128;
-            image.height = 128;
+            image.width = 256;
+            image.height = 256;
 
             gl.bindTexture(gl.TEXTURE_2D, texBuffer);
             gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
@@ -425,25 +395,6 @@ export default class extends React.Component {
 
       this.iconMapBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, this.iconMapBuffer);
-
-      const pinTextureMap = [
-        [0, 2],
-        [1.5, 1.2],
-        [2, 0.2],
-        [1.5, -1.2],
-        [0, -3],
-        [-1.5, -1.2],
-        [-2, 0.2],
-        [-1.5, 1.2],
-        [0, 2],
-        [0.5, 2],
-        [0.5, 2],
-        [0.5, 2],
-        [0.5, 2],
-        [0.5, 2],
-        [0.5, 2],
-        [0.5, 2]
-      ];
 
       if (pinVerticesCount !== pinTextureMap.length) {
         console.warn(
@@ -504,6 +455,11 @@ export default class extends React.Component {
   };
 
   render() {
-    return <div ref={this.mapContainer} className="mapContainer"></div>;
+    return (
+      <>
+        <div ref={this.mapContainer} className="mapContainer"></div>
+        {/* <img src={require("./img/baby.svg")} /> */}
+      </>
+    );
   }
 }
