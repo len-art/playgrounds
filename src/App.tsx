@@ -280,10 +280,7 @@ export default class extends React.Component {
         }
       }
 
-      // const pinMeshData = OBJ.initMeshBuffers(gl, mesh);
-      // console.log(pinMeshData, pinMeshData.vertexBuffer);
-
-      // link the two shaders into a WebGL program
+      /* attach shaders to this WebGL program */
       this.program = gl.createProgram();
       if (this.program && vertexShader && fragmentShader) {
         gl.attachShader(this.program, vertexShader);
@@ -360,6 +357,8 @@ export default class extends React.Component {
         },
         {}
       );
+
+      /* pins */
       let pinVerticesCount = 0;
       data.pins.forEach(cluster => {
         if (!this.program) {
@@ -404,7 +403,7 @@ export default class extends React.Component {
 
       gl.bufferData(
         gl.ARRAY_BUFFER,
-        new Float32Array(pinTextureMap.flat()),
+        new Float32Array(mesh.textures),
         gl.STATIC_DRAW
       );
     },
