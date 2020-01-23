@@ -1,8 +1,13 @@
 import React from "react";
 import mapboxgl from "mapbox-gl";
+import * as OBJ from "webgl-obj-loader";
 import "./App.css";
 
+import pin from "./obj/pin";
+
 import data, { PinCluster } from "./data";
+
+const mesh = new OBJ.Mesh(pin);
 
 const mapsConfig = {
   mapboxKey:
@@ -51,21 +56,59 @@ interface ExtendedLayer extends TestLayer {
 }
 
 const getPinVertices = (loc: mapboxgl.MercatorCoordinate) => {
-  const mercatorRadius = 0.000006;
-  const c = [loc.x, loc.y - mercatorRadius];
+  const r = 0.000006;
+  const c = [loc.x, loc.y - r];
 
-  return [
-    c,
-    [c[0], c[1] - mercatorRadius],
-    [c[0] + mercatorRadius / 1.5, c[1] - mercatorRadius / 1.5],
-    [c[0] + mercatorRadius, c[1]],
-    [c[0] + mercatorRadius / 1.5, c[1] + mercatorRadius / 1.5],
-    [c[0], c[1] + mercatorRadius * 1.2],
-    [c[0] - mercatorRadius / 1.5, c[1] + mercatorRadius / 1.5],
-    [c[0] - mercatorRadius, c[1]],
-    [c[0] - mercatorRadius / 1.5, c[1] - mercatorRadius / 1.5],
-    [c[0], c[1] - mercatorRadius]
+  const manuallyWrittenVertices = [
+    // c,
+    [c[0], c[1] - r],
+    [c[0] + r / 1.5, c[1] - r / 1.5],
+    [c[0] + r, c[1]],
+    [c[0] + r / 1.5, c[1] + r / 1.5],
+    [c[0], c[1] + r * 1.2],
+    [c[0] - r / 1.5, c[1] + r / 1.5],
+    [c[0] - r, c[1]],
+    [c[0] - r / 1.5, c[1] - r / 1.5],
+    [c[0], c[1] - r]
   ];
+  return manuallyWrittenVertices;
+
+  const normalizedVertices = [
+    [1.0, 0.0],
+    [0.707107, -0.707107],
+    [0.0, -1.0],
+    [-0.707107, -0.707107],
+    [-1.0, 0.0],
+    [-0.707106, 0.707107],
+    [0.000001, 1.25743],
+    [0.707108, 0.707106],
+    [1.0, 0.0]
+  ];
+  const normalizedHiResVertices = [
+    [0.0, -1.0],
+    [-0.382683, -0.92388],
+    [-0.707107, -0.707107],
+    [-0.92388, -0.382683],
+    [-1.0, -0.0],
+    [-0.92388, 0.382683],
+    [-0.707107, 0.707107],
+    [-0.382683, 0.92388],
+    [0.0, 1.0],
+    [0.382684, 0.923879],
+    [0.707107, 0.707106],
+    [0.92388, 0.382683],
+    [1.25743, -0.000001],
+    [0.923879, -0.382684],
+    [0.707106, -0.707108],
+    [0.382682, -0.92388]
+  ];
+
+  const vertices = normalizedHiResVertices.map(v => [
+    c[0] + r * v[0],
+    c[1] + r * v[1]
+  ]);
+
+  return vertices;
 };
 
 /* simplified 2d ray cast becaue we only render 2d-like */
@@ -347,7 +390,7 @@ export default class extends React.Component {
         },
         {}
       );
-
+      let pinVerticesCount = 0;
       data.pins.forEach(cluster => {
         if (!this.program) {
           return;
@@ -358,6 +401,7 @@ export default class extends React.Component {
           cluster.pins[0].location
         );
         const vertices = getPinVertices(projection);
+        pinVerticesCount = vertices.length;
 
         const posBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
@@ -382,22 +426,34 @@ export default class extends React.Component {
       this.iconMapBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, this.iconMapBuffer);
 
-      const textureMapping = [
-        [0.5, 0.2],
-        [0.5, 2],
+      const pinTextureMap = [
+        [0, 2],
         [1.5, 1.2],
         [2, 0.2],
         [1.5, -1.2],
-        [0.5, -3],
+        [0, -3],
         [-1.5, -1.2],
         [-2, 0.2],
         [-1.5, 1.2],
+        [0, 2],
+        [0.5, 2],
+        [0.5, 2],
+        [0.5, 2],
+        [0.5, 2],
+        [0.5, 2],
+        [0.5, 2],
         [0.5, 2]
       ];
 
+      if (pinVerticesCount !== pinTextureMap.length) {
+        console.warn(
+          `Pin vertices count not same as texture map count (${pinVerticesCount} - ${pinTextureMap.length}).`
+        );
+      }
+
       gl.bufferData(
         gl.ARRAY_BUFFER,
-        new Float32Array(textureMapping.flat()),
+        new Float32Array(pinTextureMap.flat()),
         gl.STATIC_DRAW
       );
     },
