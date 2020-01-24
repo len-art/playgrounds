@@ -1,4 +1,6 @@
-export default `# Blender v2.81 (sub 16) OBJ File: 'newPinHires.blend'
+import * as OBJ from "webgl-obj-loader";
+
+export const rawPinObj = `# Blender v2.81 (sub 16) OBJ File: 'newPinHires.blend'
 # www.blender.org
 o Circle.001
 v 1.000000 0.000000 0.000000
@@ -64,3 +66,24 @@ vt 1.249850 0.503693
 s off
 f 2/1 3/2 4/3 5/4 6/5 7/6 8/7 9/8 10/9 11/10 12/11 13/12 14/13 15/14 16/15 17/16 18/17 19/18 20/19 21/20 22/21 23/22 24/23 25/24 26/25 27/26 28/27 29/28 30/29 1/30
 `;
+
+// let's try to use mesh directly, read OBJ documentation
+const mesh = new OBJ.Mesh(rawPinObj);
+
+const group1dto2d = (n: number[]) =>
+  n.reduce((a: number[][], v, i) => {
+    if (i % 2) {
+      a[a.length - 1][1] = v;
+    } else {
+      a.push([v]);
+    }
+    return a;
+  }, []);
+
+const groupedVertices = group1dto2d(
+  mesh.vertices.filter((v, i) => (i + 1) % 3 !== 0)
+);
+
+const groupedTextureMap = group1dto2d(mesh.textures);
+
+export default { mesh, groupedVertices, groupedTextureMap };
