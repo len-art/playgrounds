@@ -3,7 +3,7 @@ import mapboxgl from "mapbox-gl";
 import "./App.css";
 
 import PinLayer from "./layers/pin";
-import data from "./data";
+import data from "./staticData/pins";
 
 const mapsConfig = {
   mapboxKey:
