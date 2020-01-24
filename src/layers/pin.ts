@@ -74,7 +74,6 @@ export default class PinLayer {
   onAdd = (map: mapboxgl.Map, gl: WebGL2RenderingContext) => {
     /* called when layer is added */
     this.program = this.createProgram(gl);
-    console.log(this.program);
     if (!this.program) {
       return;
     }
@@ -85,7 +84,7 @@ export default class PinLayer {
 
     this.pinTextureMap = this.createPinTextureMap(gl);
 
-    this.pinData = this.createPinData(gl);
+    this.pinData = this.createPinData(gl, data.pins);
   };
 
   createProgram = (gl: WebGL2RenderingContext) => {
@@ -163,7 +162,7 @@ export default class PinLayer {
 
         const bufferLoc = gl.getUniformLocation(this.program, "u_iconTexture");
 
-        const buffer = this.create1x1Texture(gl, [0, 0, 0, 255]);
+        const buffer = this.create1x1Texture(gl, [0, 0, 0, 0]);
 
         const image = new Image();
         image.onload = () => {
@@ -181,6 +180,8 @@ export default class PinLayer {
             image
           );
           gl.generateMipmap(gl.TEXTURE_2D);
+
+          this.map?.triggerRepaint();
         };
         image.onerror = console.error;
         image.src = action.svg;
@@ -216,9 +217,9 @@ export default class PinLayer {
     };
   };
 
-  createPinData = (gl: WebGLRenderingContext) => {
+  createPinData = (gl: WebGLRenderingContext, pins: PinCluster[]) => {
     /* creates pin data and copies needed information to GPU buffers */
-    return data.pins.reduce((acc: PinData[], cluster) => {
+    return pins.reduce((acc: PinData[], cluster) => {
       if (!this.program) {
         return acc;
       }
@@ -338,5 +339,15 @@ export default class PinLayer {
       // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       gl.drawArrays(gl.TRIANGLE_FAN, 0, pd.veticesCount);
     });
+  };
+
+  updatePins = (pins: PinCluster[]) => {
+    const gl = this.map?.getCanvas().getContext("webgl");
+    if (!gl) {
+      return;
+    }
+
+    this.pinData = this.createPinData(gl, pins);
+    this.map?.triggerRepaint();
   };
 }

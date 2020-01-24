@@ -3,6 +3,7 @@ import mapboxgl from "mapbox-gl";
 import "./App.css";
 
 import PinLayer from "./layers/pin";
+import data from "./data";
 
 const mapsConfig = {
   mapboxKey:
@@ -26,7 +27,7 @@ export default class extends React.Component {
     image: undefined
   };
 
-  layer: any;
+  pinLayer?: PinLayer;
 
   componentDidMount() {
     this.createMap();
@@ -45,11 +46,30 @@ export default class extends React.Component {
   };
 
   createLayers = () => {
-    this.layer = new PinLayer({
+    this.pinLayer = new PinLayer({
       map: this.map,
       pins: [],
       onClick: console.log
     });
+    /* enable for demo purposes */
+    // this.animatePins();
+  };
+
+  animatePins = () => {
+    setInterval(() => {
+      this.pinLayer?.updatePins(
+        data.pins.map(c => ({
+          ...c,
+          pins: c.pins.map(p => ({
+            ...p,
+            location: {
+              lat: p.location.lat + 0.001 * Math.random(),
+              lng: p.location.lng + 0.001 * Math.random()
+            }
+          }))
+        }))
+      );
+    }, 3000);
   };
 
   render() {
