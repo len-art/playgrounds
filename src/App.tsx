@@ -3,6 +3,8 @@ import mapboxgl from "mapbox-gl";
 import * as OBJ from "webgl-obj-loader";
 import "./App.css";
 
+import PinShaders from "./shaders/pin";
+
 import pin from "./obj/pin";
 
 import data, { PinCluster } from "./data";
@@ -20,8 +22,6 @@ interface TestLayer extends mapboxgl.CustomLayerInterface {
   program: WebGLProgram | null;
   aPosLocation: number;
   aColorLocation: number;
-  vertexBuffer: WebGLBuffer | null;
-  colorBuffer: WebGLBuffer | null;
   type: any;
 }
 
@@ -36,8 +36,6 @@ interface PinIconTex {
 }
 
 interface ExtendedLayer extends TestLayer {
-  aPinShapeLocation: number;
-  pinShapeBuffer: WebGLBuffer | null;
   iconMapBuffer: WebGLTexture | null;
   iconMapLoc: number;
 
@@ -109,7 +107,7 @@ const createBgTexture = (gl: WebGL2RenderingContext, color: number[]) => {
   const internalFormat = gl.RGBA;
   const srcFormat = gl.RGBA;
   const srcType = gl.UNSIGNED_BYTE;
-  const pixel = new Uint8Array([color[0], color[1], color[2], 255]);
+  const pixel = new Uint8Array([color[0], color[1], color[2], color[3]]);
   gl.texImage2D(
     gl.TEXTURE_2D,
     level,
@@ -210,10 +208,6 @@ export default class extends React.Component {
     program: null,
     aPosLocation: 0,
     aColorLocation: 0,
-    vertexBuffer: null,
-    colorBuffer: null,
-    aPinShapeLocation: 0,
-    pinShapeBuffer: null,
     pinBackgroundTex: {},
     pinIconTex: {},
     pinDetails: [],
@@ -221,47 +215,10 @@ export default class extends React.Component {
     iconMapLoc: 0,
 
     onAdd: function(map: mapboxgl.Map, gl: WebGL2RenderingContext) {
-      /* GLSL source for vertex shader */
-      const vertexSource = `
-      uniform mat4 u_matrix;
-      
-      attribute vec2 a_iconMap;
-      attribute vec2 a_pos;
-
-      varying vec2 v_iconCoord;
-
-      void main() {
-        gl_Position = u_matrix * vec4(a_pos, 0.0, 1.0);
-        v_iconCoord = a_iconMap;
-      }`;
-
-      /* GLSL source for fragment shader */
-      const fragmentSource = `
-      precision mediump float;
-
-      uniform sampler2D u_bgTexture;
-      uniform sampler2D u_iconTexture;
-
-      varying vec2 v_iconCoord;
-
-      void main() {
-        vec4 bgColor = texture2D(u_bgTexture, vec2(0.0, 0.0));
-        vec4 iconColor = texture2D(u_iconTexture, v_iconCoord);
-
-        if (iconColor.a == 0.0 || v_iconCoord.x < 0.0 ||
-          v_iconCoord.y < 0.0 ||
-          v_iconCoord.x > 1.0 ||
-          v_iconCoord.y > 1.0) {
-          gl_FragColor = bgColor;
-        } else {
-          gl_FragColor = iconColor;
-        }
-      }`;
-
-      /* create a vertex shader */
+      /* create and compile a vertex shader */
       const vertexShader = gl.createShader(gl.VERTEX_SHADER);
       if (vertexShader) {
-        gl.shaderSource(vertexShader, vertexSource);
+        gl.shaderSource(vertexShader, PinShaders.vertex);
         gl.compileShader(vertexShader);
         const log = gl.getShaderInfoLog(vertexShader);
         if (log && log.length) {
@@ -269,10 +226,10 @@ export default class extends React.Component {
         }
       }
 
-      /* create a fragment shader */
+      /* create and compile a fragment shader */
       const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
       if (fragmentShader) {
-        gl.shaderSource(fragmentShader, fragmentSource);
+        gl.shaderSource(fragmentShader, PinShaders.fragment);
         gl.compileShader(fragmentShader);
         const log = gl.getShaderInfoLog(fragmentShader);
         if (log && log.length) {
@@ -305,7 +262,7 @@ export default class extends React.Component {
 
           const uTexLoc = gl.getUniformLocation(this.program, "u_bgTexture");
 
-          const texBuffer = createBgTexture(gl, colorValues);
+          const texBuffer = createBgTexture(gl, [...colorValues, 255]);
 
           acc[possessionKey] = { texLoc: uTexLoc, texBuffer };
 
@@ -329,7 +286,7 @@ export default class extends React.Component {
 
           const texLoc = gl.getUniformLocation(this.program, "u_iconTexture");
 
-          const texBuffer = createBgTexture(gl, [255, 0, 255, 255]);
+          const texBuffer = createBgTexture(gl, [0, 0, 0, 0]);
 
           const image = new Image();
           image.onload = () => {
@@ -407,7 +364,7 @@ export default class extends React.Component {
         gl.STATIC_DRAW
       );
     },
-    render: function(gl: WebGL2RenderingContext, matrix: Iterable<number>) {
+    render: function(gl, matrix) {
       gl.useProgram(this.program);
       if (!this.program) {
         return;
@@ -450,6 +407,9 @@ export default class extends React.Component {
         // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.drawArrays(gl.TRIANGLE_FAN, 0, pd.arraySize);
       });
+    },
+    onRemove: function(map, gl) {
+      gl.deleteProgram(this.program);
     }
   };
 
