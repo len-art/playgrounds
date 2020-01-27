@@ -1,4 +1,4 @@
-import { Pin, PinCluster, ProjectedPin } from "../staticData/pins";
+import { PinCluster, ProjectedPin } from "../staticData/pins";
 
 const grpDst = 30;
 
