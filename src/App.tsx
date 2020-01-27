@@ -46,16 +46,51 @@ export default class extends React.Component {
         center: [-77.0369, 38.9072],
         zoom: 12
       });
+      /* cluster pins on first load */
+      this.map.on("load", this.clusterPins);
     }
   };
 
   createLayers = () => {
     this.pinLayer = new PinLayer({
       map: this.map,
-      pins: []
+      clusters: []
     });
     /* enable for demo purposes */
     // this.animatePins();
+  };
+
+  createEventHandlers = () => {
+    if (!this.map) {
+      return;
+    }
+    this.map.on("moveend", this.handleMapMove);
+  };
+
+  handleMapMove = async (
+    e: mapboxgl.MapboxEvent<MouseEvent | TouchEvent | WheelEvent | undefined> &
+      mapboxgl.EventData
+  ) => {
+    this.clusterPins();
+  };
+
+  clusterPins = async () => {
+    const projectedPins = data.unclusteredPins.reduce(
+      (acc: ProjectedPin[], p) => {
+        if (!this.map) {
+          return acc;
+        }
+        acc.push({
+          ...p,
+          screenLocation: this.map.project([p.location.lng, p.location.lat])
+        });
+        return acc;
+      },
+      []
+    );
+
+    const clusters = await clusterPins(projectedPins);
+    this.pinLayer?.updatePins(clusters);
   };
 
   animatePins = () => {
@@ -73,35 +108,6 @@ export default class extends React.Component {
         }))
       );
     }, 3000);
-  };
-
-  createEventHandlers = () => {
-    if (!this.map) {
-      return;
-    }
-    this.map.on("moveend", this.handleMapMove);
-  };
-
-  handleMapMove = async (
-    e: mapboxgl.MapboxEvent<MouseEvent | TouchEvent | WheelEvent | undefined> &
-      mapboxgl.EventData
-  ) => {
-    const projectedPins = data.unclusteredPins.reduce(
-      (acc: ProjectedPin[], p) => {
-        if (!this.map) {
-          return acc;
-        }
-        acc.push({
-          ...p,
-          screenLocation: this.map.project([p.location.lng, p.location.lat])
-        });
-        return acc;
-      },
-      []
-    );
-
-    const clusters = await clusterPins(projectedPins);
-    this.pinLayer?.updatePins(clusters);
   };
 
   render() {

@@ -9,7 +9,7 @@ import { isPointInPolygon } from "../../helpers/mapHelpers";
 
 interface Args {
   map?: mapboxgl.Map;
-  pins: PinCluster[];
+  clusters: PinCluster[];
 }
 
 interface Texture {
@@ -35,7 +35,7 @@ interface PinData {
 
 export default class PinLayer {
   map?: mapboxgl.Map;
-  pins: PinCluster[];
+  clusters: PinCluster[];
 
   program: WebGLProgram | null = null;
 
@@ -52,7 +52,7 @@ export default class PinLayer {
 
   constructor(args: Args) {
     this.map = args.map;
-    this.pins = args.pins;
+    this.clusters = args.clusters;
 
     this.init();
   }
@@ -77,12 +77,12 @@ export default class PinLayer {
       return;
     }
     const projectedClick = mapboxgl.MercatorCoordinate.fromLngLat(e.lngLat);
-    const clickedPin = data.clusters.reduce(
+
+    const clickedCluster = this.clusters.reduce(
       (acc: PinCluster | undefined, cluster) => {
         if (acc) {
           return acc;
         }
-
         const vertices = this.getPinVertices(cluster);
 
         const wasClicked = isPointInPolygon(
@@ -95,7 +95,7 @@ export default class PinLayer {
       undefined
     );
 
-    console.log(clickedPin);
+    console.log(clickedCluster);
   };
 
   onAdd = (map: mapboxgl.Map, gl: WebGL2RenderingContext) => {
@@ -111,7 +111,7 @@ export default class PinLayer {
 
     this.pinTextureMap = this.createPinTextureMap(gl);
 
-    this.pinData = this.createPinData(gl, data.clusters);
+    this.pinData = this.createPinData(gl);
   };
 
   createProgram = (gl: WebGL2RenderingContext) => {
@@ -244,9 +244,9 @@ export default class PinLayer {
     };
   };
 
-  createPinData = (gl: WebGLRenderingContext, pins: PinCluster[]) => {
+  createPinData = (gl: WebGLRenderingContext) => {
     /* creates pin data and copies needed information to GPU buffers */
-    return pins.reduce((acc: PinData[], cluster) => {
+    return this.clusters.reduce((acc: PinData[], cluster) => {
       if (!this.program) {
         return acc;
       }
@@ -373,12 +373,13 @@ export default class PinLayer {
   };
 
   updatePins = (pins: PinCluster[]) => {
+    this.clusters = pins;
     const gl = this.map?.getCanvas().getContext("webgl");
     if (!gl) {
       return;
     }
 
-    this.pinData = this.createPinData(gl, pins);
+    this.pinData = this.createPinData(gl);
     this.map?.triggerRepaint();
   };
 }
