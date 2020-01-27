@@ -1,5 +1,6 @@
 import * as OBJ from "webgl-obj-loader";
 
+/* Blender export: X forward, Z up */
 export const rawPinObj = `# Blender v2.81 (sub 16) OBJ File: 'newPinHires.blend'
 # www.blender.org
 o Circle.001

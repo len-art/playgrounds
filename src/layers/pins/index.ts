@@ -4,6 +4,7 @@ import { lusolve, divide, flatten } from "mathjs";
 import PinShaders from "./shaders";
 import { PinCluster } from "../../staticData/pins";
 import pinObjectData from "../../obj/pin";
+import clusterObjectData from "../../obj/cluster";
 
 import data from "../../staticData/pins";
 import { isPointInPolygon } from "../../helpers/mapHelpers";
@@ -51,6 +52,11 @@ export default class PinLayer {
     buffer: null
   };
 
+  clusterTextureMap: Buffer = {
+    bufferLoc: 0,
+    buffer: null
+  };
+
   pinData: PinData[] = [];
 
   constructor(args: Args) {
@@ -81,13 +87,14 @@ export default class PinLayer {
       return;
     }
     const projectedClick = mapboxgl.MercatorCoordinate.fromLngLat(e.lngLat);
+    const zoom = this.map?.getZoom();
 
     const clickedCluster = this.clusters.reduce(
       (acc: PinCluster | undefined, cluster) => {
         if (acc) {
           return acc;
         }
-        const vertices = this.getPinVertices(cluster);
+        const vertices = this.getPinVertices(cluster, zoom);
 
         const wasClicked = isPointInPolygon(
           [projectedClick.x, projectedClick.y],
@@ -117,6 +124,8 @@ export default class PinLayer {
     this.pinTextures = this.createIconTextures(gl);
 
     this.pinTextureMap = this.createPinTextureMap(gl);
+
+    this.clusterTextureMap = this.createClusterTextureMap(gl);
 
     this.pinData = this.createPinData(gl);
   };
@@ -251,15 +260,39 @@ export default class PinLayer {
     };
   };
 
+  createClusterTextureMap = (gl: WebGLRenderingContext) => {
+    /* creates a texture map for pin icons */
+    if (!this.program) {
+      return {
+        bufferLoc: 0,
+        buffer: null
+      };
+    }
+    const bufferLoc = gl.getAttribLocation(this.program, "a_clusterIconMap");
+
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array(clusterObjectData.mesh.textures),
+      gl.STATIC_DRAW
+    );
+    return {
+      bufferLoc,
+      buffer
+    };
+  };
+
   createPinData = (gl: WebGLRenderingContext) => {
     /* creates pin data and copies needed information to GPU buffers */
+    const zoom = this.map?.getZoom();
     return this.clusters.reduce((acc: PinData[], cluster) => {
       if (!this.program) {
         return acc;
       }
       const posBufferLoc = gl.getAttribLocation(this.program, "a_pinLoc");
 
-      const vertices = this.getPinVertices(cluster, this.map?.getZoom());
+      const vertices = this.getPinVertices(cluster, zoom);
 
       const posBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
@@ -320,7 +353,28 @@ export default class PinLayer {
     const c = [loc.x, loc.y - r];
 
     const vertices = pinObjectData.groupedVertices.map(v => {
-      // coord.x-Math.fround(coord.x), coord.y-Math.fround(coord.y)
+      const x = c[0] + r * v[0];
+      const y = c[1] + r * v[1];
+      return [x, y, x - Math.fround(x), y - Math.fround(y)];
+    });
+
+    return vertices;
+  };
+
+  getClusterVertices = (cluster: PinCluster, zoom = 10) => {
+    const maxR = 0.000009;
+
+    const clampedZoom = Math.min(Math.max(8, zoom), 17);
+    const zoomPercent = clampedZoom / 18;
+    const r = maxR - maxR * zoomPercent;
+
+    const loc = mapboxgl.MercatorCoordinate.fromLngLat(
+      cluster.pins[0].location
+    );
+
+    const c = [loc.x, loc.y - r];
+
+    const vertices = clusterObjectData.groupedVertices.map(v => {
       const x = c[0] + r * v[0];
       const y = c[1] + r * v[1];
       return [x, y, x - Math.fround(x), y - Math.fround(y)];
@@ -368,29 +422,28 @@ export default class PinLayer {
     gl.uniform4fv(gl.getUniformLocation(this.program, "u_eyeHigh"), eyeHigh);
     gl.uniform4fv(gl.getUniformLocation(this.program, "u_eyeLow"), eyeLow);
 
+    /* pin icon texture map */
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.pinTextureMap.buffer);
+
+    gl.vertexAttribPointer(
+      this.pinTextureMap.bufferLoc,
+      2,
+      gl.FLOAT,
+      false,
+      0,
+      0
+    );
+    gl.enableVertexAttribArray(this.pinTextureMap.bufferLoc);
+
     this.pinData.forEach(pd => {
-      // this goes within `render`
       if (!this.program) {
         return false;
       }
-      /* bind and use vertex buffer */
+      /* pin shape */
       gl.bindBuffer(gl.ARRAY_BUFFER, pd.posBuffer);
 
       gl.vertexAttribPointer(pd.posBufferLoc, 4, gl.FLOAT, false, 0, 0);
       gl.enableVertexAttribArray(pd.posBufferLoc);
-
-      /* icon texture map */
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.pinTextureMap.buffer);
-
-      gl.vertexAttribPointer(
-        this.pinTextureMap.bufferLoc,
-        2,
-        gl.FLOAT,
-        false,
-        0,
-        0
-      );
-      gl.enableVertexAttribArray(this.pinTextureMap.bufferLoc);
 
       /* bg 1x1 texture */
       const backgroundTex = this.pinBackgrounds[pd.possessionKey];
