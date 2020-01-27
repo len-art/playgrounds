@@ -15,6 +15,7 @@ import betaRideIcon from "../img/betaRide.svg";
 import groundedIcon from "../img/grounded.svg";
 import triageIcon from "../img/triage.svg";
 import otaIcon from "../img/ota.svg";
+import { Point } from "mapbox-gl";
 
 const floatFrom8Bit = (n: number) => Math.round((n / 255) * 100) / 100;
 
@@ -159,7 +160,7 @@ const actions: {
   }
 };
 
-interface Pin {
+export interface Pin {
   [key: string]: any;
   vehicleId: number;
   blackboxId?: string;
@@ -171,6 +172,10 @@ interface Pin {
 export interface PinCluster {
   pins: Pin[];
   isSelected: boolean;
+}
+
+export interface ProjectedPin extends Pin {
+  screenLocation: Point;
 }
 
 const clusters: PinCluster[] = [

@@ -252,7 +252,7 @@ export default class PinLayer {
       }
       const posBufferLoc = gl.getAttribLocation(this.program, "a_pinLoc");
 
-      const vertices = this.getPinVertices(cluster);
+      const vertices = this.getPinVertices(cluster, this.map?.getZoom());
 
       const posBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
@@ -299,17 +299,21 @@ export default class PinLayer {
     return tempTexture;
   };
 
-  getPinVertices = (cluster: PinCluster) => {
+  getPinVertices = (cluster: PinCluster, zoom = 10) => {
     const r = 0.000009;
+    // const maxDiff = r - 0.0000009;
+    // const zoomPercent = (zoom / 28) * maxDiff;
+    // console.log(zoomPercent);
+    const radius = r;
     const loc = mapboxgl.MercatorCoordinate.fromLngLat(
       cluster.pins[0].location
     );
 
-    const c = [loc.x, loc.y - r];
+    const c = [loc.x, loc.y - radius];
 
     const vertices = pinObjectData.groupedVertices.map(v => [
-      c[0] + r * v[0],
-      c[1] + r * v[1]
+      c[0] + radius * v[0],
+      c[1] + radius * v[1]
     ]);
 
     return vertices;

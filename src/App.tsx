@@ -1,9 +1,12 @@
 import React from "react";
 import mapboxgl from "mapbox-gl";
+
+import "mapbox-gl/dist/mapbox-gl.css";
 import "./App.css";
 
 import PinLayer from "./layers/pins";
-import data from "./staticData/pins";
+import data, { ProjectedPin } from "./staticData/pins";
+import clusterPins from "./helpers/clusterPins";
 
 const mapsConfig = {
   mapboxKey:
@@ -72,8 +75,6 @@ export default class extends React.Component {
     }, 3000);
   };
 
-  clusterPins = () => {};
-
   createEventHandlers = () => {
     if (!this.map) {
       return;
@@ -81,11 +82,26 @@ export default class extends React.Component {
     this.map.on("moveend", this.handleMapMove);
   };
 
-  handleMapMove = (
+  handleMapMove = async (
     e: mapboxgl.MapboxEvent<MouseEvent | TouchEvent | WheelEvent | undefined> &
       mapboxgl.EventData
   ) => {
-    console.log("moveend");
+    const projectedPins = data.unclusteredPins.reduce(
+      (acc: ProjectedPin[], p) => {
+        if (!this.map) {
+          return acc;
+        }
+        acc.push({
+          ...p,
+          screenLocation: this.map.project([p.location.lng, p.location.lat])
+        });
+        return acc;
+      },
+      []
+    );
+
+    const clusters = await clusterPins(projectedPins);
+    this.pinLayer?.updatePins(clusters);
   };
 
   render() {
