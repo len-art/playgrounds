@@ -1,15 +1,15 @@
 import mapboxgl from "mapbox-gl";
 
-import PinShaders from "../shaders/pin";
-import { PinCluster } from "../staticData/pins";
-import pinObjectData from "../obj/pin";
+import PinShaders from "./shaders";
+import { PinCluster } from "../../staticData/pins";
+import pinObjectData from "../../obj/pin";
 
-import data from "../staticData/pins";
+import data from "../../staticData/pins";
+import { isPointInPolygon } from "../../helpers/mapHelpers";
 
 interface Args {
   map?: mapboxgl.Map;
   pins: PinCluster[];
-  onClick(): void;
 }
 
 interface Texture {
@@ -67,9 +67,36 @@ export default class PinLayer {
             onAdd: this.onAdd,
             render: this.render
           });
+          this.map.on("click", this.handleClick);
         }
       });
   }
+
+  handleClick = (e: mapboxgl.MapMouseEvent & mapboxgl.EventData) => {
+    if (!this.map) {
+      return;
+    }
+    const projectedClick = mapboxgl.MercatorCoordinate.fromLngLat(e.lngLat);
+    const clickedPin = data.clusters.reduce(
+      (acc: PinCluster | undefined, cluster) => {
+        if (acc) {
+          return acc;
+        }
+
+        const vertices = this.getPinVertices(cluster);
+
+        const wasClicked = isPointInPolygon(
+          [projectedClick.x, projectedClick.y],
+          vertices
+        );
+
+        return wasClicked ? cluster : acc;
+      },
+      undefined
+    );
+
+    console.log(clickedPin);
+  };
 
   onAdd = (map: mapboxgl.Map, gl: WebGL2RenderingContext) => {
     /* called when layer is added */
@@ -84,7 +111,7 @@ export default class PinLayer {
 
     this.pinTextureMap = this.createPinTextureMap(gl);
 
-    this.pinData = this.createPinData(gl, data.pins);
+    this.pinData = this.createPinData(gl, data.clusters);
   };
 
   createProgram = (gl: WebGL2RenderingContext) => {

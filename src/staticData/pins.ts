@@ -1,20 +1,20 @@
-import batteryAlertIcon from "./img/batteryAlert.svg";
-import powerIcon from "./img/power.svg";
-import babyIcon from "./img/baby.svg";
-import buildIcon from "./img/build.svg";
-import gpsFixedIcon from "./img/gpsFixed.svg";
-import settingsIcon from "./img/settings.svg";
-import notListedIcon from "./img/notListed.svg";
-import repositionIcon from "./img/reposition.svg";
-import returnIcon from "./img/return.svg";
-import rideIcon from "./img/ride.svg";
-import homeIcon from "./img/home.svg";
-import offlineIcon from "./img/offline.svg";
-import whatsHotIcon from "./img/whatsHot.svg";
-import betaRideIcon from "./img/betaRide.svg";
-import groundedIcon from "./img/grounded.svg";
-import triageIcon from "./img/triage.svg";
-import otaIcon from "./img/ota.svg";
+import batteryAlertIcon from "../img/batteryAlert.svg";
+import powerIcon from "../img/power.svg";
+import babyIcon from "../img/baby.svg";
+import buildIcon from "../img/build.svg";
+import gpsFixedIcon from "../img/gpsFixed.svg";
+import settingsIcon from "../img/settings.svg";
+import notListedIcon from "../img/notListed.svg";
+import repositionIcon from "../img/reposition.svg";
+import returnIcon from "../img/return.svg";
+import rideIcon from "../img/ride.svg";
+import homeIcon from "../img/home.svg";
+import offlineIcon from "../img/offline.svg";
+import whatsHotIcon from "../img/whatsHot.svg";
+import betaRideIcon from "../img/betaRide.svg";
+import groundedIcon from "../img/grounded.svg";
+import triageIcon from "../img/triage.svg";
+import otaIcon from "../img/ota.svg";
 
 const floatFrom8Bit = (n: number) => Math.round((n / 255) * 100) / 100;
 
@@ -173,7 +173,7 @@ export interface PinCluster {
   isSelected: boolean;
 }
 
-const pins: PinCluster[] = [
+const clusters: PinCluster[] = [
   {
     pins: [
       {
@@ -14136,4 +14136,9 @@ const pins: PinCluster[] = [
   }
 ];
 
-export default { pins, possessions, actions };
+const unclusteredPins = clusters.reduce((acc: Pin[], cluster) => {
+  acc.push(...cluster.pins);
+  return acc;
+}, []);
+
+export default { clusters, unclusteredPins, possessions, actions };

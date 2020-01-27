@@ -2,7 +2,7 @@ import React from "react";
 import mapboxgl from "mapbox-gl";
 import "./App.css";
 
-import PinLayer from "./layers/pin";
+import PinLayer from "./layers/pins";
 import data from "./staticData/pins";
 
 const mapsConfig = {
@@ -32,13 +32,14 @@ export default class extends React.Component {
   componentDidMount() {
     this.createMap();
     this.createLayers();
+    this.createEventHandlers();
   }
 
   createMap = () => {
     if (this.mapContainer.current) {
       this.map = new mapboxgl.Map({
         container: this.mapContainer.current,
-        style: "mapbox://styles/mapbox/streets-v11",
+        style: "mapbox://styles/mikewadhera/ck1rtb0jk09ia1ck1yfofff2l",
         center: [-77.0369, 38.9072],
         zoom: 12
       });
@@ -48,8 +49,7 @@ export default class extends React.Component {
   createLayers = () => {
     this.pinLayer = new PinLayer({
       map: this.map,
-      pins: [],
-      onClick: console.log
+      pins: []
     });
     /* enable for demo purposes */
     // this.animatePins();
@@ -58,7 +58,7 @@ export default class extends React.Component {
   animatePins = () => {
     setInterval(() => {
       this.pinLayer?.updatePins(
-        data.pins.map(c => ({
+        data.clusters.map(c => ({
           ...c,
           pins: c.pins.map(p => ({
             ...p,
@@ -70,6 +70,22 @@ export default class extends React.Component {
         }))
       );
     }, 3000);
+  };
+
+  clusterPins = () => {};
+
+  createEventHandlers = () => {
+    if (!this.map) {
+      return;
+    }
+    this.map.on("moveend", this.handleMapMove);
+  };
+
+  handleMapMove = (
+    e: mapboxgl.MapboxEvent<MouseEvent | TouchEvent | WheelEvent | undefined> &
+      mapboxgl.EventData
+  ) => {
+    console.log("moveend");
   };
 
   render() {
