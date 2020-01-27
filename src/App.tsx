@@ -7,6 +7,7 @@ import "./App.css";
 import PinLayer from "./layers/pins";
 import data, { ProjectedPin } from "./staticData/pins";
 import clusterPins from "./helpers/clusterPins";
+import PinPopup from "./PinPopup";
 
 const mapsConfig = {
   mapboxKey:
@@ -17,7 +18,11 @@ const mapsConfig = {
 
 mapboxgl.accessToken = mapsConfig.mapboxKey;
 
-export default class extends React.Component {
+interface State {
+  clickedVehicleId?: string;
+}
+
+export default class extends React.Component<State> {
   highlightProgram: WebGLProgram | null = null;
   highlightAPos: number = 0;
   highlightBuffer: WebGLBuffer | null = null;
@@ -26,8 +31,8 @@ export default class extends React.Component {
 
   map?: mapboxgl.Map;
 
-  state = {
-    image: undefined
+  state: State = {
+    clickedVehicleId: undefined
   };
 
   pinLayer?: PinLayer;
@@ -54,7 +59,8 @@ export default class extends React.Component {
   createLayers = () => {
     this.pinLayer = new PinLayer({
       map: this.map,
-      clusters: []
+      clusters: [],
+      handleClick: this.handlePinClick
     });
     /* enable for demo purposes */
     // this.animatePins();
@@ -93,6 +99,14 @@ export default class extends React.Component {
     this.pinLayer?.updatePins(clusters);
   };
 
+  handlePinClick = (vehicleId?: string) => {
+    this.setState({ clickedVehicleId: vehicleId });
+  };
+
+  closePinPopup = () => {
+    this.setState({ clickedVehicleId: undefined });
+  };
+
   animatePins = () => {
     setInterval(() => {
       this.pinLayer?.updatePins(
@@ -114,6 +128,10 @@ export default class extends React.Component {
     return (
       <>
         <div ref={this.mapContainer} className="mapContainer"></div>
+        <PinPopup
+          vehicleId={this.state.clickedVehicleId}
+          handleClose={this.closePinPopup}
+        />
       </>
     );
   }

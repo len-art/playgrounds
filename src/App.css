@@ -5,3 +5,14 @@
   left: 0;
   bottom: 0;
 }
+
+.pinPopup {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #fff;
+  border-radius: 4px;
+  transition: 0.25s;
+  padding: 10px 15px;
+}

@@ -1,4 +1,5 @@
 import mapboxgl from "mapbox-gl";
+import { lusolve, divide, flatten } from "mathjs";
 
 import PinShaders from "./shaders";
 import { PinCluster } from "../../staticData/pins";
@@ -10,6 +11,7 @@ import { isPointInPolygon } from "../../helpers/mapHelpers";
 interface Args {
   map?: mapboxgl.Map;
   clusters: PinCluster[];
+  handleClick?(vehicleId?: string): void;
 }
 
 interface Texture {
@@ -36,6 +38,7 @@ interface PinData {
 export default class PinLayer {
   map?: mapboxgl.Map;
   clusters: PinCluster[];
+  handleClickCallback?(vehicleId?: string): void;
 
   program: WebGLProgram | null = null;
 
@@ -53,6 +56,7 @@ export default class PinLayer {
   constructor(args: Args) {
     this.map = args.map;
     this.clusters = args.clusters;
+    this.handleClickCallback = args.handleClick;
 
     this.init();
   }
@@ -96,6 +100,9 @@ export default class PinLayer {
     );
 
     console.log(clickedCluster);
+    if (this.handleClickCallback) {
+      this?.handleClickCallback(clickedCluster?.pins[0].blackboxId);
+    }
   };
 
   onAdd = (map: mapboxgl.Map, gl: WebGL2RenderingContext) => {
@@ -300,45 +307,76 @@ export default class PinLayer {
   };
 
   getPinVertices = (cluster: PinCluster, zoom = 10) => {
-    const r = 0.000009;
-    // const maxDiff = r - 0.0000009;
-    // const zoomPercent = (zoom / 28) * maxDiff;
-    // console.log(zoomPercent);
-    const radius = r;
+    const maxR = 0.000009;
+
+    const clampedZoom = Math.min(Math.max(8, zoom), 17);
+    const zoomPercent = clampedZoom / 18;
+    const r = maxR - maxR * zoomPercent;
+
     const loc = mapboxgl.MercatorCoordinate.fromLngLat(
       cluster.pins[0].location
     );
 
-    const c = [loc.x, loc.y - radius];
+    const c = [loc.x, loc.y - r];
 
-    const vertices = pinObjectData.groupedVertices.map(v => [
-      c[0] + radius * v[0],
-      c[1] + radius * v[1]
-    ]);
+    const vertices = pinObjectData.groupedVertices.map(v => {
+      // coord.x-Math.fround(coord.x), coord.y-Math.fround(coord.y)
+      const x = c[0] + r * v[0];
+      const y = c[1] + r * v[1];
+      return [x, y, x - Math.fround(x), y - Math.fround(y)];
+    });
 
     return vertices;
+  };
+
+  getEyePosition = (matrix: number[]) => {
+    const transform = [
+      [matrix[0], matrix[4], matrix[8], matrix[12]],
+      [matrix[1], matrix[5], matrix[9], matrix[13]],
+      [matrix[2], matrix[6], matrix[10], matrix[14]],
+      [matrix[3], matrix[7], matrix[11], matrix[15]]
+    ];
+    let eye = lusolve(transform, [[0], [0], [0], [1]]);
+    // @ts-ignore
+    const clip_w = 1.0 / eye[3][0];
+    // @ts-ignore
+    eye = divide(eye, eye[3][0]);
+    // @ts-ignore
+    eye[3][0] = clip_w;
+
+    return flatten(eye);
   };
 
   render = (gl: WebGLRenderingContext, matrix: number[]) => {
     /* called every frame */
     gl.useProgram(this.program);
-    if (!this.program) {
+    if (!(this.program && this.map)) {
       return;
     }
+
     gl.uniformMatrix4fv(
       gl.getUniformLocation(this.program, "u_matrix"),
       false,
       matrix
     );
 
+    /* calculate precise eye coordinates for high precision projection */
+    var eyeHigh = this.getEyePosition(matrix) as number[];
+    var eyeLow = eyeHigh.map(function(e) {
+      return e - Math.fround(e);
+    });
+    gl.uniform4fv(gl.getUniformLocation(this.program, "u_eyeHigh"), eyeHigh);
+    gl.uniform4fv(gl.getUniformLocation(this.program, "u_eyeLow"), eyeLow);
+
     this.pinData.forEach(pd => {
+      // this goes within `render`
       if (!this.program) {
         return false;
       }
       /* bind and use vertex buffer */
       gl.bindBuffer(gl.ARRAY_BUFFER, pd.posBuffer);
 
-      gl.vertexAttribPointer(pd.posBufferLoc, 2, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(pd.posBufferLoc, 4, gl.FLOAT, false, 0, 0);
       gl.enableVertexAttribArray(pd.posBufferLoc);
 
       /* icon texture map */
