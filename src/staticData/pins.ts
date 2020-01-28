@@ -50,8 +50,8 @@ const possessions: {
 } = {
   FIELD: {
     name: "Field",
-    fColor: hexToFloat("#333333"),
-    rgbColor: hexToRgb("#333333")
+    fColor: hexToFloat("#828282"),
+    rgbColor: hexToRgb("#828282")
   },
   RANGER: {
     name: "Ranger",

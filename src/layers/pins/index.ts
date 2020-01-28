@@ -220,8 +220,8 @@ export default class PinLayer {
 
         const image = new Image();
         image.onload = () => {
-          image.width = 256;
-          image.height = 256;
+          image.width = 128;
+          image.height = 128;
 
           gl.bindTexture(gl.TEXTURE_2D, buffer);
           gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
@@ -353,8 +353,8 @@ export default class PinLayer {
   getPinVertices = (cluster: PinCluster, zoom = 10) => {
     const maxR = 0.000009;
 
-    const clampedZoom = Math.min(Math.max(8, zoom), 17);
-    const zoomPercent = clampedZoom / 18;
+    const clampedZoom = Math.min(Math.max(8, zoom), 18);
+    const zoomPercent = clampedZoom / 19;
     const r = maxR - maxR * zoomPercent;
 
     const loc = mapboxgl.MercatorCoordinate.fromLngLat(

@@ -1,4 +1,4 @@
-/* GLSL source: vertex shader */
+/* GLSL source for vertex shader */
 export default `
 uniform mat4 u_matrix;
 uniform vec4 u_eyeHigh;

@@ -1,4 +1,4 @@
-/* GLSL source: fragment shader */
+/* GLSL source for fragment shader */
 export default `
 precision mediump float;
 
