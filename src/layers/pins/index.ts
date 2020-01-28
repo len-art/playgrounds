@@ -114,7 +114,12 @@ export default class PinLayer {
 
   onAdd = (map: mapboxgl.Map, gl: WebGL2RenderingContext) => {
     /* called when layer is added */
-    this.program = this.createProgram(gl);
+    this.program = this.createProgram(
+      gl,
+      PinShaders.vertex,
+      PinShaders.fragment
+    );
+
     if (!this.program) {
       return;
     }
@@ -130,11 +135,16 @@ export default class PinLayer {
     this.pinData = this.createPinData(gl);
   };
 
-  createProgram = (gl: WebGL2RenderingContext) => {
+  createProgram = (
+    gl: WebGL2RenderingContext,
+    vertexShaderSource: string,
+    fragmentShaderSource: string
+  ) => {
     /* create and compile a vertex shader */
     const vertexShader = gl.createShader(gl.VERTEX_SHADER);
     if (vertexShader) {
-      gl.shaderSource(vertexShader, PinShaders.vertex);
+      gl.shaderSource(vertexShader, vertexShaderSource);
+      // gl.shaderSource(vertexShader, PinShaders.vertex);
       gl.compileShader(vertexShader);
       const log = gl.getShaderInfoLog(vertexShader);
       if (log && log.length) {
@@ -145,7 +155,8 @@ export default class PinLayer {
     /* create and compile a fragment shader */
     const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
     if (fragmentShader) {
-      gl.shaderSource(fragmentShader, PinShaders.fragment);
+      gl.shaderSource(fragmentShader, fragmentShaderSource);
+      // gl.shaderSource(fragmentShader, PinShaders.fragment);
       gl.compileShader(fragmentShader);
       const log = gl.getShaderInfoLog(fragmentShader);
       if (log && log.length) {
@@ -245,7 +256,7 @@ export default class PinLayer {
         buffer: null
       };
     }
-    const bufferLoc = gl.getAttribLocation(this.program, "a_iconMap");
+    const bufferLoc = gl.getAttribLocation(this.program, "a_pinIconMap");
 
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);

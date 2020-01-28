@@ -4,7 +4,7 @@ uniform mat4 u_matrix;
 uniform vec4 u_eyeHigh;
 uniform vec4 u_eyeLow;
       
-attribute vec2 a_iconMap;
+attribute vec2 a_pinIconMap;
 attribute vec4 a_pinLoc;
 
 varying vec2 v_iconCoord;
@@ -16,5 +16,5 @@ void main() {
   gl_Position = u_matrix * gl_Position; //apply view-projection matrix
   gl_Position.w += u_eyeHigh.w; //fix w_clip coordinates
 
-  v_iconCoord = a_iconMap;
+  v_iconCoord = a_pinIconMap;
 }`;
