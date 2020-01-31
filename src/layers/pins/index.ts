@@ -291,6 +291,9 @@ export default class PinLayer {
 
     const image = new Image();
     image.onload = () => {
+      image.width = 128;
+      image.height = 128;
+
       gl.bindTexture(gl.TEXTURE_2D, buffer);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
       gl.texImage2D(

@@ -92,8 +92,7 @@ const createTextTexture = (text: string) => {
   if (!ctx) {
     return;
   }
-  const fontSize = 40;
-  const pixelRatio = window.devicePixelRatio || 1;
+  const fontSize = 80;
 
   ctx.font = `${fontSize}px sans-serif`;
   ctx.textAlign = "center";
@@ -102,16 +101,14 @@ const createTextTexture = (text: string) => {
 
   const canvasSize = getNextPowerOfTwo(textDimensions.width);
 
-  canvas.style.width = `${canvasSize}px`;
-  canvas.style.height = `${canvasSize}px`;
-  canvas.width = canvasSize * pixelRatio;
-  canvas.height = canvasSize * pixelRatio;
+  canvas.width = canvasSize;
+  canvas.height = canvasSize;
 
-  ctx.font = `${fontSize * 2}px sans-serif`;
+  ctx.font = `${fontSize - 5}px sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#fff";
-  ctx.fillText(text, canvasSize, canvasSize);
+  ctx.fillText(text, canvasSize / 2, canvasSize / 2);
 
   return canvas.toDataURL();
 };
