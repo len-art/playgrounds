@@ -41,7 +41,6 @@ export default class extends React.Component<State> {
   pinLayer?: PinLayer;
 
   componentDidMount() {
-    // console.log(typeface.createTextTexture("2"));
     this.createMap();
     this.createLayers();
     this.createEventHandlers();

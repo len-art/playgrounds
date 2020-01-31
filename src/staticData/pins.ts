@@ -16,6 +16,7 @@ import groundedIcon from "../img/grounded.svg";
 import triageIcon from "../img/triage.svg";
 import otaIcon from "../img/ota.svg";
 import { Point } from "mapbox-gl";
+import { Possessions } from "../layers/pins/models";
 
 const floatFrom8Bit = (n: number) => Math.round((n / 255) * 100) / 100;
 
@@ -41,13 +42,7 @@ const hexToRgb = (hex: string) => {
     : [0, 0, 0, 1];
 };
 
-const possessions: {
-  [key: string]: {
-    name: string;
-    fColor: number[];
-    rgbColor: number[];
-  };
-} = {
+const possessions: Possessions = {
   FIELD: {
     name: "Field",
     fColor: hexToFloat("#828282"),
