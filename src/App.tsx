@@ -6,6 +6,7 @@ import "./App.css";
 
 import PinLayer from "./layers/pins";
 import data, { ProjectedPin } from "./staticData/pins";
+import typeface from "./staticData/typeface";
 import clusterPins from "./helpers/clusterPins";
 import PinPopup from "./PinPopup";
 
@@ -38,6 +39,7 @@ export default class extends React.Component<State> {
   pinLayer?: PinLayer;
 
   componentDidMount() {
+    console.log(typeface.createTextTexture("2"));
     this.createMap();
     this.createLayers();
     this.createEventHandlers();
@@ -127,6 +129,16 @@ export default class extends React.Component<State> {
   render() {
     return (
       <>
+        {/* <canvas
+          id="cnvs"
+          style={{
+            zIndex: 100,
+            position: "relative"
+            // width: 15 * 10,
+            // height: 20
+          }}
+        /> */}
+        {/* <img id="imgtest" /> */}
         <div ref={this.mapContainer} className="mapContainer"></div>
         <PinPopup
           vehicleId={this.state.clickedVehicleId}

@@ -2,12 +2,13 @@ import mapboxgl from "mapbox-gl";
 import { lusolve, divide, flatten } from "mathjs";
 
 import PinShaders from "./shaders";
-import { PinCluster } from "../../staticData/pins";
+import pins, { PinCluster } from "../../staticData/pins";
 import pinObjectData from "../../obj/pin";
 import clusterObjectData from "../../obj/cluster";
 
 import data from "../../staticData/pins";
 import { isPointInPolygon } from "../../helpers/mapHelpers";
+import typeface, { GlyphInfos } from "../../staticData/typeface";
 
 interface Args {
   map?: mapboxgl.Map;
@@ -36,14 +37,21 @@ interface PinData {
   actionKey: string;
 }
 
+interface ClusterData extends PinData {
+  iconBufferLoc: WebGLUniformLocation | null;
+  iconBuffer: WebGLTexture | null;
+}
+
 export default class PinLayer {
   map?: mapboxgl.Map;
   clusters: PinCluster[];
   handleClickCallback?(vehicleId?: string): void;
 
-  program: WebGLProgram | null = null;
+  pinsProgram: WebGLProgram | null = null;
+  clustersProgram: WebGLProgram | null = null;
 
   pinBackgrounds: PinBackgroundTextures = {};
+  clusterBackgrounds: PinBackgroundTextures = {};
 
   pinTextures: PinIconTextures = {};
 
@@ -51,13 +59,13 @@ export default class PinLayer {
     bufferLoc: 0,
     buffer: null
   };
-
   clusterTextureMap: Buffer = {
     bufferLoc: 0,
     buffer: null
   };
 
   pinData: PinData[] = [];
+  clusterData: ClusterData[] = [];
 
   constructor(args: Args) {
     this.map = args.map;
@@ -114,25 +122,44 @@ export default class PinLayer {
 
   onAdd = (map: mapboxgl.Map, gl: WebGL2RenderingContext) => {
     /* called when layer is added */
-    this.program = this.createProgram(
+    this.pinsProgram = this.createProgram(
       gl,
       PinShaders.vertex,
       PinShaders.fragment
     );
+    this.clustersProgram = this.createProgram(
+      gl,
+      PinShaders.vertexClusters,
+      PinShaders.fragmentClusters
+    );
 
-    if (!this.program) {
+    if (!(this.pinsProgram && this.clustersProgram)) {
       return;
     }
 
-    this.pinBackgrounds = this.createBackgroundTextures(gl);
+    this.pinBackgrounds = this.createBackgroundTextures(gl, this.pinsProgram);
+    this.clusterBackgrounds = this.createBackgroundTextures(
+      gl,
+      this.clustersProgram
+    );
 
-    this.pinTextures = this.createIconTextures(gl);
+    this.pinTextures = this.createIconTextures(gl, this.pinsProgram);
 
-    this.pinTextureMap = this.createPinTextureMap(gl);
+    // this.createClusterTexture(gl, this.clustersProgram);
 
-    this.clusterTextureMap = this.createClusterTextureMap(gl);
+    this.pinTextureMap = this.createPinTextureMap(gl, this.pinsProgram);
+    this.clusterTextureMap = this.createClusterTextureMap(
+      gl,
+      this.clustersProgram
+    );
 
-    this.pinData = this.createPinData(gl);
+    const allPinData = this.createPinData(
+      gl,
+      this.pinsProgram,
+      this.clustersProgram
+    );
+    this.pinData = allPinData.pins;
+    this.clusterData = allPinData.clusters;
   };
 
   createProgram = (
@@ -178,16 +205,16 @@ export default class PinLayer {
     return program;
   };
 
-  createBackgroundTextures = (gl: WebGLRenderingContext) => {
+  createBackgroundTextures = (
+    gl: WebGLRenderingContext,
+    program: WebGLProgram
+  ) => {
     /* creates background textures for every possession */
     return Object.keys(data.possessions).reduce(
       (acc: PinBackgroundTextures, possessionKey) => {
-        if (!this.program) {
-          return acc;
-        }
         const colorValues = data.possessions[possessionKey].rgbColor;
 
-        const bufferLoc = gl.getUniformLocation(this.program, "u_bgTexture");
+        const bufferLoc = gl.getUniformLocation(program, "u_bgTexture");
 
         const buffer = this.create1x1Texture(gl, [...colorValues, 255]);
 
@@ -199,7 +226,7 @@ export default class PinLayer {
     );
   };
 
-  createIconTextures = (gl: WebGLRenderingContext) => {
+  createIconTextures = (gl: WebGLRenderingContext, program: WebGLProgram) => {
     /* sets a temporary transparent texture,
     asynchronously loads actual icons which are then copied to GPU buffer */
     const level = 0;
@@ -209,12 +236,9 @@ export default class PinLayer {
 
     return Object.keys(data.actions).reduce(
       (acc: PinIconTextures, actionKey) => {
-        if (!this.program) {
-          return acc;
-        }
         const action = data.actions[actionKey];
 
-        const bufferLoc = gl.getUniformLocation(this.program, "u_iconTexture");
+        const bufferLoc = gl.getUniformLocation(program, "u_iconTexture");
 
         const buffer = this.create1x1Texture(gl, [0, 0, 0, 0]);
 
@@ -248,16 +272,51 @@ export default class PinLayer {
     );
   };
 
-  createPinTextureMap = (gl: WebGLRenderingContext) => {
-    /* creates a texture map for pin icons */
-    if (!this.program) {
-      return {
-        bufferLoc: 0,
-        buffer: null
-      };
-    }
-    const bufferLoc = gl.getAttribLocation(this.program, "a_pinIconMap");
+  createClusterTexture = (
+    gl: WebGLRenderingContext,
+    program: WebGLProgram,
+    text: string
+  ) => {
+    /* sets a temporary transparent texture,
+    asynchronously loads actual icons which are then copied to GPU buffer */
+    const glyphUrl = typeface.createTextTexture(text);
 
+    const level = 0;
+    const internalFormat = gl.RGBA;
+    const srcFormat = gl.RGBA;
+    const srcType = gl.UNSIGNED_BYTE;
+
+    const iconBufferLoc = gl.getUniformLocation(program, "a_clusterTexture");
+
+    const iconBuffer = this.create1x1Texture(gl, [0, 0, 0, 0]);
+
+    const image = new Image();
+    image.onload = () => {
+      // image.width = 128;
+      // image.height = 128;
+
+      gl.bindTexture(gl.TEXTURE_2D, iconBuffer);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        level,
+        internalFormat,
+        srcFormat,
+        srcType,
+        image
+      );
+      gl.generateMipmap(gl.TEXTURE_2D);
+
+      this.map?.triggerRepaint();
+    };
+    image.onerror = console.error;
+    image.src = glyphUrl as string;
+    return { iconBufferLoc, iconBuffer };
+  };
+
+  createPinTextureMap = (gl: WebGLRenderingContext, program: WebGLProgram) => {
+    /* creates a texture map for pin icons */
+    const bufferLoc = gl.getAttribLocation(program, "a_pinIconMap");
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(
@@ -271,15 +330,12 @@ export default class PinLayer {
     };
   };
 
-  createClusterTextureMap = (gl: WebGLRenderingContext) => {
+  createClusterTextureMap = (
+    gl: WebGLRenderingContext,
+    program: WebGLProgram
+  ) => {
     /* creates a texture map for pin icons */
-    if (!this.program) {
-      return {
-        bufferLoc: 0,
-        buffer: null
-      };
-    }
-    const bufferLoc = gl.getAttribLocation(this.program, "a_clusterIconMap");
+    const bufferLoc = gl.getAttribLocation(program, "a_clusterIconMap");
 
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -294,35 +350,59 @@ export default class PinLayer {
     };
   };
 
-  createPinData = (gl: WebGLRenderingContext) => {
-    /* creates pin data and copies needed information to GPU buffers */
+  createPinData = (
+    gl: WebGLRenderingContext,
+    programPins: WebGLProgram,
+    programClusters: WebGLProgram
+  ) => {
     const zoom = this.map?.getZoom();
-    return this.clusters.reduce((acc: PinData[], cluster) => {
-      if (!this.program) {
+    return this.clusters.reduce(
+      (acc: { clusters: ClusterData[]; pins: PinData[] }, cluster) => {
+        let vertices = this.getPinVertices(cluster, zoom);
+
+        const posBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array(vertices.flat()),
+          gl.STATIC_DRAW
+        );
+
+        const pinData = {
+          posBuffer,
+          veticesCount: vertices.length,
+          possessionKey: cluster.pins[0].possessionType,
+          actionKey: cluster.pins[0].action
+        };
+
+        if (cluster.pins.length === 1) {
+          /* it's-a-pin */
+          const posBufferLoc = gl.getAttribLocation(programPins, "a_pinLoc");
+          acc.pins.push({ ...pinData, posBufferLoc });
+        } else {
+          /* it's-a-cluster */
+          const posBufferLoc = gl.getAttribLocation(
+            programClusters,
+            "a_pinLoc"
+          );
+
+          const clusterTexture = this.createClusterTexture(
+            gl,
+            programClusters,
+            cluster.pins.length.toString()
+          );
+
+          acc.clusters.push({
+            ...pinData,
+            posBufferLoc,
+            ...clusterTexture
+          });
+        }
+
         return acc;
-      }
-      const posBufferLoc = gl.getAttribLocation(this.program, "a_pinLoc");
-
-      const vertices = this.getPinVertices(cluster, zoom);
-
-      const posBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array(vertices.flat()),
-        gl.STATIC_DRAW
-      );
-
-      acc.push({
-        posBufferLoc,
-        posBuffer,
-        veticesCount: vertices.length,
-        possessionKey: cluster.pins[0].possessionType,
-        actionKey: cluster.pins[0].action
-      });
-
-      return acc;
-    }, []);
+      },
+      { clusters: [], pins: [] }
+    );
   };
 
   create1x1Texture = (gl: WebGLRenderingContext, color: number[]) => {
@@ -363,29 +443,14 @@ export default class PinLayer {
 
     const c = [loc.x, loc.y - r];
 
-    const vertices = pinObjectData.groupedVertices.map(v => {
-      const x = c[0] + r * v[0];
-      const y = c[1] + r * v[1];
-      return [x, y, x - Math.fround(x), y - Math.fround(y)];
-    });
+    let model;
+    if (cluster.pins.length === 1) {
+      model = pinObjectData.groupedVertices;
+    } else {
+      model = clusterObjectData.groupedVertices;
+    }
 
-    return vertices;
-  };
-
-  getClusterVertices = (cluster: PinCluster, zoom = 10) => {
-    const maxR = 0.000009;
-
-    const clampedZoom = Math.min(Math.max(8, zoom), 17);
-    const zoomPercent = clampedZoom / 18;
-    const r = maxR - maxR * zoomPercent;
-
-    const loc = mapboxgl.MercatorCoordinate.fromLngLat(
-      cluster.pins[0].location
-    );
-
-    const c = [loc.x, loc.y - r];
-
-    const vertices = clusterObjectData.groupedVertices.map(v => {
+    const vertices = model.map(v => {
       const x = c[0] + r * v[0];
       const y = c[1] + r * v[1];
       return [x, y, x - Math.fround(x), y - Math.fround(y)];
@@ -414,25 +479,97 @@ export default class PinLayer {
 
   render = (gl: WebGLRenderingContext, matrix: number[]) => {
     /* called every frame */
-    gl.useProgram(this.program);
-    if (!(this.program && this.map)) {
-      return;
-    }
-
-    gl.uniformMatrix4fv(
-      gl.getUniformLocation(this.program, "u_matrix"),
-      false,
-      matrix
-    );
 
     /* calculate precise eye coordinates for high precision projection */
     var eyeHigh = this.getEyePosition(matrix) as number[];
     var eyeLow = eyeHigh.map(function(e) {
       return e - Math.fround(e);
     });
-    gl.uniform4fv(gl.getUniformLocation(this.program, "u_eyeHigh"), eyeHigh);
-    gl.uniform4fv(gl.getUniformLocation(this.program, "u_eyeLow"), eyeLow);
 
+    /* render clusters first */
+    if (!this.clustersProgram) {
+      return;
+    }
+    gl.useProgram(this.clustersProgram);
+
+    gl.uniformMatrix4fv(
+      gl.getUniformLocation(this.clustersProgram, "u_matrix"),
+      false,
+      matrix
+    );
+
+    gl.uniform4fv(
+      gl.getUniformLocation(this.clustersProgram, "u_eyeHigh"),
+      eyeHigh
+    );
+    gl.uniform4fv(
+      gl.getUniformLocation(this.clustersProgram, "u_eyeLow"),
+      eyeLow
+    );
+
+    this.renderClusters(gl);
+
+    /* pins go on top of the clusters */
+    if (!this.pinsProgram) {
+      return;
+    }
+    gl.useProgram(this.pinsProgram);
+
+    gl.uniformMatrix4fv(
+      gl.getUniformLocation(this.pinsProgram, "u_matrix"),
+      false,
+      matrix
+    );
+
+    gl.uniform4fv(
+      gl.getUniformLocation(this.pinsProgram, "u_eyeHigh"),
+      eyeHigh
+    );
+    gl.uniform4fv(gl.getUniformLocation(this.pinsProgram, "u_eyeLow"), eyeLow);
+
+    this.renderPins(gl);
+  };
+
+  renderClusters = (gl: WebGLRenderingContext) => {
+    /* pin icon texture map */
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.clusterTextureMap.buffer);
+
+    gl.vertexAttribPointer(
+      this.clusterTextureMap.bufferLoc,
+      2,
+      gl.FLOAT,
+      false,
+      0,
+      0
+    );
+    gl.enableVertexAttribArray(this.clusterTextureMap.bufferLoc);
+
+    this.clusterData.forEach(pd => {
+      if (!this.clustersProgram) {
+        return false;
+      }
+      /* pin shape */
+      gl.bindBuffer(gl.ARRAY_BUFFER, pd.posBuffer);
+
+      gl.vertexAttribPointer(pd.posBufferLoc, 4, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(pd.posBufferLoc);
+
+      /* bg 1x1 texture */
+      const backgroundTex = this.clusterBackgrounds[pd.possessionKey];
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, backgroundTex.buffer);
+      gl.uniform1i(backgroundTex.bufferLoc, 0);
+
+      /* icon texture */
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, pd.iconBuffer);
+      gl.uniform1i(pd.iconBufferLoc, 1);
+
+      gl.drawArrays(gl.TRIANGLE_FAN, 0, pd.veticesCount);
+    });
+  };
+
+  renderPins = (gl: WebGLRenderingContext) => {
     /* pin icon texture map */
     gl.bindBuffer(gl.ARRAY_BUFFER, this.pinTextureMap.buffer);
 
@@ -447,7 +584,7 @@ export default class PinLayer {
     gl.enableVertexAttribArray(this.pinTextureMap.bufferLoc);
 
     this.pinData.forEach(pd => {
-      if (!this.program) {
+      if (!this.pinsProgram) {
         return false;
       }
       /* pin shape */
@@ -468,8 +605,6 @@ export default class PinLayer {
       gl.bindTexture(gl.TEXTURE_2D, iconTex.buffer);
       gl.uniform1i(iconTex.bufferLoc, 1);
 
-      // gl.enable(gl.BLEND);
-      // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       gl.drawArrays(gl.TRIANGLE_FAN, 0, pd.veticesCount);
     });
   };
@@ -477,11 +612,19 @@ export default class PinLayer {
   updatePins = (pins: PinCluster[]) => {
     this.clusters = pins;
     const gl = this.map?.getCanvas().getContext("webgl");
-    if (!gl) {
+    if (!(gl && this.pinsProgram && this.clustersProgram)) {
       return;
     }
 
-    this.pinData = this.createPinData(gl);
+    const allPinData = this.createPinData(
+      gl,
+      this.pinsProgram,
+      this.clustersProgram
+    );
+
+    this.pinData = allPinData.pins;
+    this.clusterData = allPinData.clusters;
+
     this.map?.triggerRepaint();
   };
 }
