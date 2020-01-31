@@ -39,7 +39,7 @@ export default class extends React.Component<State> {
   pinLayer?: PinLayer;
 
   componentDidMount() {
-    console.log(typeface.createTextTexture("2"));
+    // console.log(typeface.createTextTexture("2"));
     this.createMap();
     this.createLayers();
     this.createEventHandlers();
@@ -134,8 +134,6 @@ export default class extends React.Component<State> {
           style={{
             zIndex: 100,
             position: "relative"
-            // width: 15 * 10,
-            // height: 20
           }}
         /> */}
         {/* <img id="imgtest" /> */}

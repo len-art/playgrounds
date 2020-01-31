@@ -38,8 +38,7 @@ interface PinData {
 }
 
 interface ClusterData extends PinData {
-  iconBufferLoc: WebGLUniformLocation | null;
-  iconBuffer: WebGLTexture | null;
+  texture: Texture;
 }
 
 export default class PinLayer {
@@ -286,16 +285,13 @@ export default class PinLayer {
     const srcFormat = gl.RGBA;
     const srcType = gl.UNSIGNED_BYTE;
 
-    const iconBufferLoc = gl.getUniformLocation(program, "a_clusterTexture");
+    const bufferLoc = gl.getUniformLocation(program, "a_clusterTexture");
 
-    const iconBuffer = this.create1x1Texture(gl, [0, 0, 0, 0]);
+    const buffer = this.create1x1Texture(gl, [0, 0, 0, 0]);
 
     const image = new Image();
     image.onload = () => {
-      // image.width = 128;
-      // image.height = 128;
-
-      gl.bindTexture(gl.TEXTURE_2D, iconBuffer);
+      gl.bindTexture(gl.TEXTURE_2D, buffer);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
       gl.texImage2D(
         gl.TEXTURE_2D,
@@ -311,7 +307,7 @@ export default class PinLayer {
     };
     image.onerror = console.error;
     image.src = glyphUrl as string;
-    return { iconBufferLoc, iconBuffer };
+    return { bufferLoc, buffer };
   };
 
   createPinTextureMap = (gl: WebGLRenderingContext, program: WebGLProgram) => {
@@ -356,6 +352,8 @@ export default class PinLayer {
     programClusters: WebGLProgram
   ) => {
     const zoom = this.map?.getZoom();
+    const cachedClusterTextures: Texture[] = [];
+
     return this.clusters.reduce(
       (acc: { clusters: ClusterData[]; pins: PinData[] }, cluster) => {
         let vertices = this.getPinVertices(cluster, zoom);
@@ -386,16 +384,23 @@ export default class PinLayer {
             "a_pinLoc"
           );
 
-          const clusterTexture = this.createClusterTexture(
-            gl,
-            programClusters,
-            cluster.pins.length.toString()
-          );
+          const clusterSize = cluster.pins.length;
+          let icon: Texture;
+          if (cachedClusterTextures[clusterSize]) {
+            icon = cachedClusterTextures[clusterSize];
+          } else {
+            icon = this.createClusterTexture(
+              gl,
+              programClusters,
+              cluster.pins.length.toString()
+            );
+            cachedClusterTextures[clusterSize] = icon;
+          }
 
           acc.clusters.push({
             ...pinData,
             posBufferLoc,
-            ...clusterTexture
+            texture: icon
           });
         }
 
@@ -562,8 +567,8 @@ export default class PinLayer {
 
       /* icon texture */
       gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, pd.iconBuffer);
-      gl.uniform1i(pd.iconBufferLoc, 1);
+      gl.bindTexture(gl.TEXTURE_2D, pd.texture.buffer);
+      gl.uniform1i(pd.texture.bufferLoc, 1);
 
       gl.drawArrays(gl.TRIANGLE_FAN, 0, pd.veticesCount);
     });

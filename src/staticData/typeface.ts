@@ -81,10 +81,9 @@ const getNextPowerOfTwo = (n: number) => {
   return value;
 };
 
+const canvas = document.createElement("canvas");
 const createTextTexture = (text: string) => {
-  // TODO: only create a single canvas
   /* creates font glyph atlas by rendering text to canvas and converting it to image */
-  const canvas = document.createElement("canvas");
   // const canvas = document.getElementById("cnvs") as HTMLCanvasElement | null;
   if (!canvas) {
     return;
@@ -93,7 +92,7 @@ const createTextTexture = (text: string) => {
   if (!ctx) {
     return;
   }
-  const fontSize = 50;
+  const fontSize = 40;
   const pixelRatio = window.devicePixelRatio || 1;
 
   ctx.font = `${fontSize}px sans-serif`;
