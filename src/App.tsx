@@ -28,6 +28,8 @@ export default class extends React.Component<State> {
   highlightAPos: number = 0;
   highlightBuffer: WebGLBuffer | null = null;
 
+  lastMapZoom?: number;
+
   mapContainer = React.createRef<HTMLDivElement>();
 
   map?: mapboxgl.Map;
@@ -79,7 +81,11 @@ export default class extends React.Component<State> {
     e: mapboxgl.MapboxEvent<MouseEvent | TouchEvent | WheelEvent | undefined> &
       mapboxgl.EventData
   ) => {
-    this.clusterPins();
+    const zoom = this.map?.getZoom();
+    if (typeof zoom === "number" && zoom !== this.lastMapZoom) {
+      this.lastMapZoom = zoom;
+      this.clusterPins();
+    }
   };
 
   clusterPins = async () => {
