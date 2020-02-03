@@ -76,6 +76,7 @@ export default class extends React.Component<State> {
   };
 
   addLayers = () => {
+    /* mapbox has some handy layers as well, add them here */
     // @ts-ignore
     this.map?.addSource("DC", {
       type: "geojson",
