@@ -13,17 +13,17 @@ import {
   Buffer,
   PinBackgroundTextures,
   PinIconTextures,
-  GlData,
   PinData,
   ClusterData
 } from "./models";
+import { GlData } from "../commonModels";
 import {
   createBackgroundTextures,
-  create1x1Texture,
   getPinVertices,
   createPinTextureMap,
   createClusterTextureMap
 } from "./helpers";
+import { create1x1Texture } from "../commonHelpers";
 
 export default class PinLayer {
   map?: mapboxgl.Map;
@@ -371,7 +371,7 @@ export default class PinLayer {
 
         const pinData = {
           posBuffer,
-          veticesCount: vertices.length,
+          verticesCount: vertices.length,
           possessionKey: cluster.pins[0].possessionType,
           actionKey: cluster.pins[0].action
         };
@@ -504,7 +504,7 @@ export default class PinLayer {
       gl.bindTexture(gl.TEXTURE_2D, pd.texture.buffer);
       gl.uniform1i(pd.texture.bufferLoc, 1);
 
-      gl.drawArrays(gl.TRIANGLE_FAN, 0, pd.veticesCount);
+      gl.drawArrays(gl.TRIANGLE_FAN, 0, pd.verticesCount);
     });
   };
 
@@ -541,7 +541,7 @@ export default class PinLayer {
       gl.bindTexture(gl.TEXTURE_2D, iconTex.buffer);
       gl.uniform1i(iconTex.bufferLoc, 1);
 
-      gl.drawArrays(gl.TRIANGLE_FAN, 0, pd.veticesCount);
+      gl.drawArrays(gl.TRIANGLE_FAN, 0, pd.verticesCount);
     });
   };
 

@@ -1456,6 +1456,11 @@
   dependencies:
     "@babel/types" "^7.3.0"
 
+"@types/earcut@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@types/earcut/-/earcut-2.1.0.tgz#20cbed6e57dc65de3c1255c1a0c586864ed5c7e9"
+  integrity sha512-PKu2suACS92cLQb2DZ6ytgnQm9PKPQRCD9jPqgMUTMVEuUqLTfCRHuaOXKmZTyVpL7zqJX+ZSZoyUr4e5muSNg==
+
 "@types/eslint-visitor-keys@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@types/eslint-visitor-keys/-/eslint-visitor-keys-1.0.0.tgz#1ee30d79544ca84d68d4b3cdb0af4f205663dd2d"

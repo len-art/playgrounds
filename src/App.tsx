@@ -9,6 +9,8 @@ import data, { ProjectedPin } from "./staticData/pins";
 import typeface from "./staticData/typeface";
 import clusterPins from "./helpers/clusterPins";
 import PinPopup from "./PinPopup";
+import marketBorders from "./staticData/marketBorders.json";
+import marketSfBorders from "./staticData/marketSfBorders.json";
 
 const mapsConfig = {
   mapboxKey:
@@ -42,7 +44,7 @@ export default class extends React.Component<State> {
 
   componentDidMount() {
     this.createMap();
-    this.createLayers();
+    this.initCustomLayers();
     this.createEventHandlers();
   }
 
@@ -55,18 +57,50 @@ export default class extends React.Component<State> {
         zoom: 12
       });
       /* cluster pins on first load */
+      this.map.on("load", this.addLayers);
       this.map.on("load", this.clusterPins);
     }
   };
 
-  createLayers = () => {
+  initCustomLayers = () => {
+    /* initiate custom layers here */
+
     this.pinLayer = new PinLayer({
       map: this.map,
       clusters: [],
       handleClick: this.handlePinClick
     });
+
     /* enable for demo purposes */
     // this.animatePins();
+  };
+
+  addLayers = () => {
+    // @ts-ignore
+    this.map?.addSource("DC", {
+      type: "geojson",
+      data: marketBorders
+    });
+    this.map?.addLayer({
+      id: "DC-fill",
+      type: "fill",
+      source: "DC",
+      layout: {},
+      paint: {
+        "fill-color": "#088",
+        "fill-opacity": 0.2
+      }
+    });
+    this.map?.addLayer({
+      id: "DC-line",
+      type: "line",
+      source: "DC",
+      layout: {},
+      paint: {
+        "line-color": "#088",
+        "line-opacity": 0.5
+      }
+    });
   };
 
   createEventHandlers = () => {

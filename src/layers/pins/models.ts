@@ -19,18 +19,10 @@ export interface Buffer {
 export type PinBackgroundTextures = Record<string, Texture>;
 export type PinIconTextures = Record<string, Texture>;
 
-export interface GlData {
-  program: WebGLProgram | null;
-  matrixBufferLocation: WebGLUniformLocation | null;
-  eyeHighBufferLocation: WebGLUniformLocation | null;
-  eyeLowBufferLocation: WebGLUniformLocation | null;
-  backgroundBufferLocation: WebGLUniformLocation | null;
-}
-
 export interface PinData {
   posBufferLoc: number;
   posBuffer: WebGLBuffer | null;
-  veticesCount: number;
+  verticesCount: number;
   possessionKey: string;
   actionKey: string;
 }
