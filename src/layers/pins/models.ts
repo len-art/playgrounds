@@ -27,8 +27,28 @@ export interface PinData {
   actionKey: string;
 }
 
-export interface ClusterData extends PinData {
-  texture: Texture;
+export interface RenderablePins {
+  [possession: string]: {
+    texture: Texture;
+    data: {
+      [action: string]: {
+        texture: Texture;
+        data: PinData[];
+      };
+    };
+  };
+}
+
+export interface RenderableClusters {
+  [possession: string]: {
+    texture: Texture;
+    data: {
+      [size: number]: {
+        texture: Texture;
+        data: PinData[];
+      };
+    };
+  };
 }
 
 export interface Possessions {

@@ -9,12 +9,11 @@ import { isPointInPolygon } from "../../helpers/mapHelpers";
 import typeface from "../../staticData/typeface";
 import {
   Args,
-  Texture,
   Buffer,
   PinBackgroundTextures,
   PinIconTextures,
-  PinData,
-  ClusterData
+  RenderablePins,
+  RenderableClusters
 } from "./models";
 import { GlData } from "../commonModels";
 import {
@@ -62,8 +61,9 @@ export default class PinLayer {
     buffer: null
   };
 
-  pinData: PinData[] = [];
-  clusterData: ClusterData[] = [];
+  // pinData: PinData[] = [];
+  pinData: RenderablePins = {};
+  clusterData: RenderableClusters = {};
 
   constructor(args: Args) {
     this.map = args.map;
@@ -355,12 +355,13 @@ export default class PinLayer {
     programClusters: WebGLProgram
   ) => {
     const zoom = this.map?.getZoom();
-    const cachedClusterTextures: Texture[] = [];
 
     return this.clusters.reduce(
-      (acc: { clusters: ClusterData[]; pins: PinData[] }, cluster) => {
+      (
+        acc: { clusters: RenderableClusters; pins: RenderablePins },
+        cluster
+      ) => {
         let vertices = getPinVertices(cluster, zoom);
-
         const posBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
         gl.bufferData(
@@ -378,38 +379,58 @@ export default class PinLayer {
 
         if (cluster.pins.length === 1) {
           /* it's-a-pin */
+          if (!acc.pins[pinData.possessionKey]) {
+            const texture = this.pinBackgrounds[pinData.possessionKey];
+            acc.pins[pinData.possessionKey] = {
+              texture,
+              data: {}
+            };
+          }
+          if (!acc.pins[pinData.possessionKey].data[pinData.actionKey]) {
+            const texture = this.pinTextures[pinData.actionKey];
+            acc.pins[pinData.possessionKey].data[pinData.actionKey] = {
+              texture,
+              data: []
+            };
+          }
           const posBufferLoc = gl.getAttribLocation(programPins, "a_pinLoc");
-          acc.pins.push({ ...pinData, posBufferLoc });
+          acc.pins[pinData.possessionKey].data[pinData.actionKey].data.push({
+            ...pinData,
+            posBufferLoc
+          });
         } else {
           /* it's-a-cluster */
+          const clusterSize = cluster.pins.length;
+          if (!acc.clusters[pinData.possessionKey]) {
+            const texture = this.clusterBackgrounds[pinData.possessionKey];
+            acc.clusters[pinData.possessionKey] = { texture, data: [] };
+          }
+          if (!acc.clusters[pinData.possessionKey].data[clusterSize]) {
+            const texture = this.createClusterTexture(
+              gl,
+              programClusters,
+              cluster.pins.length.toString()
+            );
+            acc.clusters[pinData.possessionKey].data[clusterSize] = {
+              texture,
+              data: []
+            };
+          }
+
           const posBufferLoc = gl.getAttribLocation(
             programClusters,
             "a_pinLoc"
           );
 
-          const clusterSize = cluster.pins.length;
-          let icon: Texture;
-          if (cachedClusterTextures[clusterSize]) {
-            icon = cachedClusterTextures[clusterSize];
-          } else {
-            icon = this.createClusterTexture(
-              gl,
-              programClusters,
-              cluster.pins.length.toString()
-            );
-            cachedClusterTextures[clusterSize] = icon;
-          }
-
-          acc.clusters.push({
+          acc.clusters[pinData.possessionKey].data[clusterSize].data.push({
             ...pinData,
-            posBufferLoc,
-            texture: icon
+            posBufferLoc
           });
         }
 
         return acc;
       },
-      { clusters: [], pins: [] }
+      { clusters: {}, pins: {} }
     );
   };
 
@@ -486,25 +507,35 @@ export default class PinLayer {
     );
     gl.enableVertexAttribArray(this.clusterTextureMap.bufferLoc);
 
-    this.clusterData.forEach(pd => {
-      /* pin shape */
-      gl.bindBuffer(gl.ARRAY_BUFFER, pd.posBuffer);
-
-      gl.vertexAttribPointer(pd.posBufferLoc, 4, gl.FLOAT, false, 0, 0);
-      gl.enableVertexAttribArray(pd.posBufferLoc);
-
+    Object.values(this.clusterData).forEach(possession => {
       /* bg 1x1 texture */
-      const backgroundTex = this.clusterBackgrounds[pd.possessionKey];
       gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, backgroundTex.buffer);
-      gl.uniform1i(backgroundTex.bufferLoc, 0);
+      gl.bindTexture(gl.TEXTURE_2D, possession.texture.buffer);
+      gl.uniform1i(possession.texture.bufferLoc, 0);
 
-      /* icon texture */
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, pd.texture.buffer);
-      gl.uniform1i(pd.texture.bufferLoc, 1);
+      Object.values(possession.data).forEach(size => {
+        /* icon texture */
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, size.texture.buffer);
+        gl.uniform1i(size.texture.bufferLoc, 1);
 
-      gl.drawArrays(gl.TRIANGLE_FAN, 0, pd.verticesCount);
+        size.data.forEach(cluster => {
+          /* pin shape */
+          gl.bindBuffer(gl.ARRAY_BUFFER, cluster.posBuffer);
+
+          gl.vertexAttribPointer(
+            cluster.posBufferLoc,
+            4,
+            gl.FLOAT,
+            false,
+            0,
+            0
+          );
+          gl.enableVertexAttribArray(cluster.posBufferLoc);
+
+          gl.drawArrays(gl.TRIANGLE_FAN, 0, cluster.verticesCount);
+        });
+      });
     });
   };
 
@@ -522,26 +553,28 @@ export default class PinLayer {
     );
     gl.enableVertexAttribArray(this.pinTextureMap.bufferLoc);
 
-    this.pinData.forEach(pd => {
-      /* pin shape */
-      gl.bindBuffer(gl.ARRAY_BUFFER, pd.posBuffer);
-
-      gl.vertexAttribPointer(pd.posBufferLoc, 4, gl.FLOAT, false, 0, 0);
-      gl.enableVertexAttribArray(pd.posBufferLoc);
-
+    Object.values(this.pinData).forEach(possessionGroup => {
       /* bg 1x1 texture */
-      const backgroundTex = this.pinBackgrounds[pd.possessionKey];
       gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, backgroundTex.buffer);
-      gl.uniform1i(backgroundTex.bufferLoc, 0);
+      gl.bindTexture(gl.TEXTURE_2D, possessionGroup.texture.buffer);
+      gl.uniform1i(possessionGroup.texture.bufferLoc, 0);
 
-      /* icon texture */
-      const iconTex = this.pinTextures[pd.actionKey];
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, iconTex.buffer);
-      gl.uniform1i(iconTex.bufferLoc, 1);
+      Object.values(possessionGroup.data).forEach(actionGroup => {
+        /* icon texture */
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, actionGroup.texture.buffer);
+        gl.uniform1i(actionGroup.texture.bufferLoc, 1);
 
-      gl.drawArrays(gl.TRIANGLE_FAN, 0, pd.verticesCount);
+        actionGroup.data.forEach(pin => {
+          /* pin shape */
+          gl.bindBuffer(gl.ARRAY_BUFFER, pin.posBuffer);
+
+          gl.vertexAttribPointer(pin.posBufferLoc, 4, gl.FLOAT, false, 0, 0);
+          gl.enableVertexAttribArray(pin.posBufferLoc);
+
+          gl.drawArrays(gl.TRIANGLE_FAN, 0, pin.verticesCount);
+        });
+      });
     });
   };
 
@@ -557,6 +590,7 @@ export default class PinLayer {
       this.pinsGlData.program,
       this.clustersGlData.program
     );
+    console.log(allPinData);
 
     this.pinData = allPinData.pins;
     this.clusterData = allPinData.clusters;
