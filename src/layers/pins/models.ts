@@ -23,8 +23,6 @@ export interface PinData {
   posBufferLoc: number;
   posBuffer: WebGLBuffer | null;
   verticesCount: number;
-  possessionKey: string;
-  actionKey: string;
 }
 
 export interface RenderablePins {

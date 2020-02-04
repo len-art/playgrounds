@@ -372,46 +372,48 @@ export default class PinLayer {
 
         const pinData = {
           posBuffer,
-          verticesCount: vertices.length,
-          possessionKey: cluster.pins[0].possessionType,
-          actionKey: cluster.pins[0].action
+          verticesCount: vertices.length
         };
+        const possessionKey = cluster.pins[0].possessionType,
+          actionKey = cluster.pins[0].action;
 
         if (cluster.pins.length === 1) {
           /* it's-a-pin */
-          if (!acc.pins[pinData.possessionKey]) {
-            const texture = this.pinBackgrounds[pinData.possessionKey];
-            acc.pins[pinData.possessionKey] = {
+          if (!acc.pins[possessionKey]) {
+            const texture = this.pinBackgrounds[possessionKey];
+            acc.pins[possessionKey] = {
               texture,
               data: {}
             };
           }
-          if (!acc.pins[pinData.possessionKey].data[pinData.actionKey]) {
-            const texture = this.pinTextures[pinData.actionKey];
-            acc.pins[pinData.possessionKey].data[pinData.actionKey] = {
+          if (!acc.pins[possessionKey].data[actionKey]) {
+            const texture = this.pinTextures[actionKey];
+            acc.pins[possessionKey].data[actionKey] = {
               texture,
               data: []
             };
           }
+
           const posBufferLoc = gl.getAttribLocation(programPins, "a_pinLoc");
-          acc.pins[pinData.possessionKey].data[pinData.actionKey].data.push({
+
+          acc.pins[possessionKey].data[actionKey].data.push({
             ...pinData,
             posBufferLoc
           });
         } else {
           /* it's-a-cluster */
           const clusterSize = cluster.pins.length;
-          if (!acc.clusters[pinData.possessionKey]) {
-            const texture = this.clusterBackgrounds[pinData.possessionKey];
-            acc.clusters[pinData.possessionKey] = { texture, data: [] };
+          if (!acc.clusters[possessionKey]) {
+            const texture = this.clusterBackgrounds[possessionKey];
+            acc.clusters[possessionKey] = { texture, data: [] };
           }
-          if (!acc.clusters[pinData.possessionKey].data[clusterSize]) {
+          if (!acc.clusters[possessionKey].data[clusterSize]) {
             const texture = this.createClusterTexture(
               gl,
               programClusters,
               cluster.pins.length.toString()
             );
-            acc.clusters[pinData.possessionKey].data[clusterSize] = {
+            acc.clusters[possessionKey].data[clusterSize] = {
               texture,
               data: []
             };
@@ -422,7 +424,7 @@ export default class PinLayer {
             "a_pinLoc"
           );
 
-          acc.clusters[pinData.possessionKey].data[clusterSize].data.push({
+          acc.clusters[possessionKey].data[clusterSize].data.push({
             ...pinData,
             posBufferLoc
           });
@@ -590,7 +592,6 @@ export default class PinLayer {
       this.pinsGlData.program,
       this.clustersGlData.program
     );
-    console.log(allPinData);
 
     this.pinData = allPinData.pins;
     this.clusterData = allPinData.clusters;
