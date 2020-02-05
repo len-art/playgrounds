@@ -286,8 +286,8 @@ export default class PinLayer {
 
     const image = new Image();
     image.onload = () => {
-      image.width = 512;
-      image.height = 512;
+      image.width = 256;
+      image.height = 256;
 
       gl.bindTexture(gl.TEXTURE_2D, buffer);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
@@ -398,18 +398,22 @@ export default class PinLayer {
   };
 
   getPinSize = () => {
-    const base = 0.000009;
-    return base;
-    // const point1 = new Point(0, 0);
-    // const point2 = new Point(0.1, 0);
-    // const proj1 = this.map?.unproject(point1);
-    // const proj2 = this.map?.unproject(point2);
-    // if (!(proj1 && proj2)) {
-    //   return base;
-    // }
+    const base = 0.000009,
+      min = 1.7707306199099548e-7,
+      max = 0.000014877851150174592;
 
-    // const diff = Math.abs((proj1.lng - proj2.lng) / 2);
-    // return diff === undefined ? base : diff;
+    const point1 = new Point(0, 0);
+    const point2 = new Point(0.1, 0);
+    const proj1 = this.map?.unproject(point1);
+    const proj2 = this.map?.unproject(point2);
+    if (!(proj1 && proj2)) {
+      return base;
+    }
+
+    const diff = Math.abs((proj1.lng - proj2.lng) / 2);
+    const clamped = Math.min(Math.max(diff, min), max);
+
+    return diff === undefined ? base : clamped;
   };
 
   createPinData = (
@@ -618,20 +622,22 @@ export default class PinLayer {
     );
     gl.enableVertexAttribArray(this.pinTextureMap.bufferLoc);
 
+    /* pin shape texture */
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.pinShapeTexture.buffer);
+    gl.uniform1i(this.pinShapeTexture.bufferLoc, 0);
+
     Object.values(this.pinData).forEach(possessionGroup => {
       /* bg 1x1 texture */
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, this.pinShapeTexture.buffer);
-      gl.uniform1i(this.pinShapeTexture.bufferLoc, 0);
-      // gl.activeTexture(gl.TEXTURE0);
-      // gl.bindTexture(gl.TEXTURE_2D, possessionGroup.texture.buffer);
-      // gl.uniform1i(possessionGroup.texture.bufferLoc, 0);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, possessionGroup.texture.buffer);
+      gl.uniform1i(possessionGroup.texture.bufferLoc, 1);
 
       Object.values(possessionGroup.data).forEach(actionGroup => {
         /* icon texture */
-        gl.activeTexture(gl.TEXTURE1);
+        gl.activeTexture(gl.TEXTURE2);
         gl.bindTexture(gl.TEXTURE_2D, actionGroup.texture.buffer);
-        gl.uniform1i(actionGroup.texture.bufferLoc, 1);
+        gl.uniform1i(actionGroup.texture.bufferLoc, 2);
 
         actionGroup.data.forEach(pin => {
           /* pin shape */
