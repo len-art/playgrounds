@@ -19,9 +19,11 @@ import {
 } from "./models";
 import { GlData } from "../commonModels";
 import {
+  getDefaultImageSettings,
   createBackgroundTextures,
   getPinVertices,
   createPinTextureMap,
+  createPinShapeTextureMap,
   createClusterTextureMap
 } from "./helpers";
 import { create1x1Texture } from "../commonHelpers";
@@ -51,6 +53,10 @@ export default class PinLayer {
     bufferLoc: null,
     buffer: null
   };
+  pinShapeTextureMap: Buffer = {
+    bufferLoc: 0,
+    buffer: null
+  };
 
   pinBackgrounds: PinBackgroundTextures = {};
 
@@ -63,6 +69,7 @@ export default class PinLayer {
     bufferLoc: 0,
     buffer: null
   };
+
   clusterTextureMap: Buffer = {
     bufferLoc: 0,
     buffer: null
@@ -165,6 +172,11 @@ export default class PinLayer {
     this.pinTextures = this.createIconTextures(gl, this.pinTextureLocation);
 
     this.pinTextureMap = createPinTextureMap(gl, this.pinsGlData.program);
+    this.pinShapeTextureMap = createPinShapeTextureMap(
+      gl,
+      this.pinsGlData.program
+    );
+
     this.clusterTextureMap = createClusterTextureMap(
       gl,
       this.clustersGlData.program
@@ -275,10 +287,7 @@ export default class PinLayer {
     gl: WebGLRenderingContext,
     program: WebGLProgram
   ) => {
-    const level = 0;
-    const internalFormat = gl.RGBA;
-    const srcFormat = gl.RGBA;
-    const srcType = gl.UNSIGNED_BYTE;
+    const def = getDefaultImageSettings(gl);
 
     const bufferLoc = gl.getUniformLocation(program, "u_pinShapeTexture");
 
@@ -293,10 +302,10 @@ export default class PinLayer {
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
       gl.texImage2D(
         gl.TEXTURE_2D,
-        level,
-        internalFormat,
-        srcFormat,
-        srcType,
+        def.level,
+        def.internalFormat,
+        def.srcFormat,
+        def.srcType,
         image
       );
       gl.generateMipmap(gl.TEXTURE_2D);
@@ -314,10 +323,7 @@ export default class PinLayer {
   ) => {
     /* sets a temporary transparent texture,
     asynchronously loads actual icons which are then copied to GPU buffer */
-    const level = 0;
-    const internalFormat = gl.RGBA;
-    const srcFormat = gl.RGBA;
-    const srcType = gl.UNSIGNED_BYTE;
+    const def = getDefaultImageSettings(gl);
 
     return Object.keys(data.actions).reduce(
       (acc: PinIconTextures, actionKey) => {
@@ -334,10 +340,10 @@ export default class PinLayer {
           gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
           gl.texImage2D(
             gl.TEXTURE_2D,
-            level,
-            internalFormat,
-            srcFormat,
-            srcType,
+            def.level,
+            def.internalFormat,
+            def.srcFormat,
+            def.srcType,
             image
           );
           gl.generateMipmap(gl.TEXTURE_2D);
@@ -363,11 +369,7 @@ export default class PinLayer {
     /* sets a temporary transparent texture,
     asynchronously loads actual icons which are then copied to GPU buffer */
     const glyphUrl = typeface.createTextTexture(text);
-
-    const level = 0;
-    const internalFormat = gl.RGBA;
-    const srcFormat = gl.RGBA;
-    const srcType = gl.UNSIGNED_BYTE;
+    const def = getDefaultImageSettings(gl);
 
     const bufferLoc = gl.getUniformLocation(program, "a_clusterTexture");
 
@@ -382,10 +384,10 @@ export default class PinLayer {
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
       gl.texImage2D(
         gl.TEXTURE_2D,
-        level,
-        internalFormat,
-        srcFormat,
-        srcType,
+        def.level,
+        def.internalFormat,
+        def.srcFormat,
+        def.srcType,
         image
       );
       gl.generateMipmap(gl.TEXTURE_2D);
@@ -621,6 +623,19 @@ export default class PinLayer {
       0
     );
     gl.enableVertexAttribArray(this.pinTextureMap.bufferLoc);
+
+    /* pin shape texture map */
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.pinShapeTextureMap.buffer);
+
+    gl.vertexAttribPointer(
+      this.pinShapeTextureMap.bufferLoc,
+      2,
+      gl.FLOAT,
+      false,
+      0,
+      0
+    );
+    gl.enableVertexAttribArray(this.pinShapeTextureMap.bufferLoc);
 
     /* pin shape texture */
     gl.activeTexture(gl.TEXTURE0);

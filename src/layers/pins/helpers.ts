@@ -1,13 +1,20 @@
 import mapboxgl from "mapbox-gl";
 
-import pinObjectData from "../../obj/pin";
 import pinTextureShape from "../../obj/pinTextureShape";
+import pinTextureShapeIcon from "../../obj/pinTextureShapeIcon";
 import clusterObjectData from "../../obj/cluster";
 
 import { PinBackgroundTextures, Possessions } from "./models";
 import { PinCluster } from "../../staticData/pins";
 
 import { create1x1Texture } from "../commonHelpers";
+
+export const getDefaultImageSettings = (gl: WebGLRenderingContext) => ({
+  level: 0,
+  internalFormat: gl.RGBA,
+  srcFormat: gl.RGBA,
+  srcType: gl.UNSIGNED_BYTE
+});
 
 /* creates background textures for every possession */
 export const createBackgroundTextures = (
@@ -59,6 +66,25 @@ export const getPinVertices = (cluster: PinCluster, baseSize: number) => {
   return vertices;
 };
 
+export const createPinShapeTextureMap = (
+  gl: WebGLRenderingContext,
+  program: WebGLProgram
+) => {
+  /* creates a texture map for pin icons */
+  const bufferLoc = gl.getAttribLocation(program, "a_pinShapeIconMap");
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(pinTextureShape.mesh.textures),
+    gl.STATIC_DRAW
+  );
+  return {
+    bufferLoc,
+    buffer
+  };
+};
+
 export const createPinTextureMap = (
   gl: WebGLRenderingContext,
   program: WebGLProgram
@@ -69,14 +95,9 @@ export const createPinTextureMap = (
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData(
     gl.ARRAY_BUFFER,
-    new Float32Array(pinTextureShape.mesh.textures),
+    new Float32Array(pinTextureShapeIcon.mesh.textures),
     gl.STATIC_DRAW
   );
-  // gl.bufferData(
-  //   gl.ARRAY_BUFFER,
-  //   new Float32Array(pinObjectData.mesh.textures),
-  //   gl.STATIC_DRAW
-  // );
   return {
     bufferLoc,
     buffer
