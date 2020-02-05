@@ -1,4 +1,4 @@
-import mapboxgl from "mapbox-gl";
+import mapboxgl, { Point } from "mapbox-gl";
 import { lusolve, divide, flatten } from "mathjs";
 
 import PinShaders from "./shaders";
@@ -23,8 +23,6 @@ import {
   createClusterTextureMap
 } from "./helpers";
 import { create1x1Texture } from "../commonHelpers";
-
-// TODO: create a measuring method based on zoom
 
 export default class PinLayer {
   map?: mapboxgl.Map;
@@ -63,7 +61,6 @@ export default class PinLayer {
     buffer: null
   };
 
-  // pinData: PinData[] = [];
   pinData: RenderablePins = {};
   clusterData: RenderableClusters = {};
 
@@ -95,13 +92,13 @@ export default class PinLayer {
       return;
     }
     const projectedClick = mapboxgl.MercatorCoordinate.fromLngLat(e.lngLat);
+    const size = this.getPinSize();
 
     const clickedCluster = this.clusters.reduce(
       (acc: PinCluster | undefined, cluster) => {
         if (acc) {
           return acc;
         }
-        const size = this.getPinSize();
         const vertices = getPinVertices(cluster, size);
 
         const wasClicked = isPointInPolygon(
@@ -353,12 +350,15 @@ export default class PinLayer {
 
   getPinSize = () => {
     const base = 0.000009;
-    const p1 = this.map?.unproject([0, 0]);
-    const p2 = this.map?.unproject([0, 0.1]);
-    if (!(p1 && p2)) {
+    const point1 = new Point(0, 0);
+    const point2 = new Point(0.1, 0);
+    const proj1 = this.map?.unproject(point1);
+    const proj2 = this.map?.unproject(point2);
+    if (!(proj1 && proj2)) {
       return base;
     }
-    const diff = (p1.lat - p2.lat) / 2;
+
+    const diff = Math.abs((proj1.lng - proj2.lng) / 2);
     return diff === undefined ? base : diff;
   };
 
