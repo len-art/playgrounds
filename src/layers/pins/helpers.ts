@@ -6,7 +6,7 @@ import clusterObjectData from "../../obj/cluster";
 import { PinBackgroundTextures, Possessions } from "./models";
 import { PinCluster } from "../../staticData/pins";
 
-import { create1x1Texture }from '../commonHelpers'
+import { create1x1Texture } from "../commonHelpers";
 
 /* creates background textures for every possession */
 export const createBackgroundTextures = (
@@ -28,12 +28,15 @@ export const createBackgroundTextures = (
   );
 };
 
-export const getPinVertices = (cluster: PinCluster, zoom = 10) => {
-  const maxR = 0.000009;
+const getClusterSizeOffset = (size: number) => {
+  const squared = size ** 2;
+  return ~~((squared / (squared + 300)) * 12);
+};
 
-  const clampedZoom = Math.min(Math.max(8, zoom), 22);
-  const zoomPercent = clampedZoom / 22.4;
-  const r = maxR - maxR * zoomPercent;
+export const getPinVertices = (cluster: PinCluster, baseSize: number) => {
+  const offsetPx = getClusterSizeOffset(cluster.pins.length);
+  const offset = (baseSize / 10) * offsetPx;
+  const r = baseSize + offset;
 
   const loc = mapboxgl.MercatorCoordinate.fromLngLat(cluster.pins[0].location);
 

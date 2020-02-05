@@ -24,6 +24,8 @@ import {
 } from "./helpers";
 import { create1x1Texture } from "../commonHelpers";
 
+// TODO: create a measuring method based on zoom
+
 export default class PinLayer {
   map?: mapboxgl.Map;
   clusters: PinCluster[];
@@ -93,14 +95,14 @@ export default class PinLayer {
       return;
     }
     const projectedClick = mapboxgl.MercatorCoordinate.fromLngLat(e.lngLat);
-    const zoom = this.map?.getZoom();
 
     const clickedCluster = this.clusters.reduce(
       (acc: PinCluster | undefined, cluster) => {
         if (acc) {
           return acc;
         }
-        const vertices = getPinVertices(cluster, zoom);
+        const size = this.getPinSize();
+        const vertices = getPinVertices(cluster, size);
 
         const wasClicked = isPointInPolygon(
           [projectedClick.x, projectedClick.y],
@@ -349,19 +351,30 @@ export default class PinLayer {
     return { bufferLoc, buffer };
   };
 
+  getPinSize = () => {
+    const base = 0.000009;
+    const p1 = this.map?.unproject([0, 0]);
+    const p2 = this.map?.unproject([0, 0.1]);
+    if (!(p1 && p2)) {
+      return base;
+    }
+    const diff = (p1.lat - p2.lat) / 2;
+    return diff === undefined ? base : diff;
+  };
+
   createPinData = (
     gl: WebGLRenderingContext,
     programPins: WebGLProgram,
     programClusters: WebGLProgram
   ) => {
-    const zoom = this.map?.getZoom();
+    const size = this.getPinSize();
 
     return this.clusters.reduce(
       (
         acc: { clusters: RenderableClusters; pins: RenderablePins },
         cluster
       ) => {
-        let vertices = getPinVertices(cluster, zoom);
+        let vertices = getPinVertices(cluster, size);
         const posBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
         gl.bufferData(
@@ -586,7 +599,6 @@ export default class PinLayer {
     if (!(gl && this.pinsGlData.program && this.clustersGlData.program)) {
       return;
     }
-
     const allPinData = this.createPinData(
       gl,
       this.pinsGlData.program,
