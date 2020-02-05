@@ -3,6 +3,7 @@ import { lusolve, divide, flatten } from "mathjs";
 
 import PinShaders from "./shaders";
 import { PinCluster } from "../../staticData/pins";
+import pinShape from "../../img/pinShape.svg";
 
 import data from "../../staticData/pins";
 import { isPointInPolygon } from "../../helpers/mapHelpers";
@@ -13,7 +14,8 @@ import {
   PinBackgroundTextures,
   PinIconTextures,
   RenderablePins,
-  RenderableClusters
+  RenderableClusters,
+  Texture
 } from "./models";
 import { GlData } from "../commonModels";
 import {
@@ -43,6 +45,11 @@ export default class PinLayer {
     eyeHighBufferLocation: null,
     eyeLowBufferLocation: null,
     backgroundBufferLocation: null
+  };
+
+  pinShapeTexture: Texture = {
+    bufferLoc: null,
+    buffer: null
   };
 
   pinBackgrounds: PinBackgroundTextures = {};
@@ -136,6 +143,11 @@ export default class PinLayer {
     this.setUniformValues(
       gl,
       this.clustersGlData.program,
+      this.pinsGlData.program
+    );
+
+    this.pinShapeTexture = this.createPinShapeTexture(
+      gl,
       this.pinsGlData.program
     );
 
@@ -259,6 +271,43 @@ export default class PinLayer {
     );
   };
 
+  createPinShapeTexture = (
+    gl: WebGLRenderingContext,
+    program: WebGLProgram
+  ) => {
+    const level = 0;
+    const internalFormat = gl.RGBA;
+    const srcFormat = gl.RGBA;
+    const srcType = gl.UNSIGNED_BYTE;
+
+    const bufferLoc = gl.getUniformLocation(program, "u_pinShapeTexture");
+
+    const buffer = create1x1Texture(gl, [0, 0, 0, 0]);
+
+    const image = new Image();
+    image.onload = () => {
+      image.width = 512;
+      image.height = 512;
+
+      gl.bindTexture(gl.TEXTURE_2D, buffer);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        level,
+        internalFormat,
+        srcFormat,
+        srcType,
+        image
+      );
+      gl.generateMipmap(gl.TEXTURE_2D);
+
+      this.map?.triggerRepaint();
+    };
+    image.onerror = console.error;
+    image.src = pinShape;
+    return { bufferLoc, buffer };
+  };
+
   createIconTextures = (
     gl: WebGLRenderingContext,
     bufferLoc: WebGLUniformLocation | null
@@ -350,16 +399,17 @@ export default class PinLayer {
 
   getPinSize = () => {
     const base = 0.000009;
-    const point1 = new Point(0, 0);
-    const point2 = new Point(0.1, 0);
-    const proj1 = this.map?.unproject(point1);
-    const proj2 = this.map?.unproject(point2);
-    if (!(proj1 && proj2)) {
-      return base;
-    }
+    return base;
+    // const point1 = new Point(0, 0);
+    // const point2 = new Point(0.1, 0);
+    // const proj1 = this.map?.unproject(point1);
+    // const proj2 = this.map?.unproject(point2);
+    // if (!(proj1 && proj2)) {
+    //   return base;
+    // }
 
-    const diff = Math.abs((proj1.lng - proj2.lng) / 2);
-    return diff === undefined ? base : diff;
+    // const diff = Math.abs((proj1.lng - proj2.lng) / 2);
+    // return diff === undefined ? base : diff;
   };
 
   createPinData = (
@@ -571,8 +621,11 @@ export default class PinLayer {
     Object.values(this.pinData).forEach(possessionGroup => {
       /* bg 1x1 texture */
       gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, possessionGroup.texture.buffer);
-      gl.uniform1i(possessionGroup.texture.bufferLoc, 0);
+      gl.bindTexture(gl.TEXTURE_2D, this.pinShapeTexture.buffer);
+      gl.uniform1i(this.pinShapeTexture.bufferLoc, 0);
+      // gl.activeTexture(gl.TEXTURE0);
+      // gl.bindTexture(gl.TEXTURE_2D, possessionGroup.texture.buffer);
+      // gl.uniform1i(possessionGroup.texture.bufferLoc, 0);
 
       Object.values(possessionGroup.data).forEach(actionGroup => {
         /* icon texture */

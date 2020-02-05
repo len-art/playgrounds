@@ -1,6 +1,7 @@
 import mapboxgl from "mapbox-gl";
 
 import pinObjectData from "../../obj/pin";
+import pinTextureShape from "../../obj/pinTextureShape";
 import clusterObjectData from "../../obj/cluster";
 
 import { PinBackgroundTextures, Possessions } from "./models";
@@ -44,7 +45,7 @@ export const getPinVertices = (cluster: PinCluster, baseSize: number) => {
 
   let model;
   if (cluster.pins.length === 1) {
-    model = pinObjectData.groupedVertices;
+    model = pinTextureShape.groupedVertices;
   } else {
     model = clusterObjectData.groupedVertices;
   }
@@ -68,9 +69,14 @@ export const createPinTextureMap = (
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData(
     gl.ARRAY_BUFFER,
-    new Float32Array(pinObjectData.mesh.textures),
+    new Float32Array(pinTextureShape.mesh.textures),
     gl.STATIC_DRAW
   );
+  // gl.bufferData(
+  //   gl.ARRAY_BUFFER,
+  //   new Float32Array(pinObjectData.mesh.textures),
+  //   gl.STATIC_DRAW
+  // );
   return {
     bufferLoc,
     buffer
