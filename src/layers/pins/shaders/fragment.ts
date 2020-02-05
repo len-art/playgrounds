@@ -10,9 +10,9 @@ varying vec2 v_iconShapeCoord;
 varying vec2 v_iconCoord;
 
 void main() {
-  vec4 iconShapeColor = texture2D(u_pinShapeTexture, v_iconShapeCoord);
+  vec4 pinShapeColor = texture2D(u_pinShapeTexture, v_iconShapeCoord);
 
-  if (iconShapeColor.a < 0.1 ||
+  if (pinShapeColor.a < 0.1 ||
     v_iconShapeCoord.x < 0.0 ||
     v_iconShapeCoord.y < 0.0 ||
     v_iconShapeCoord.x > 1.0 ||

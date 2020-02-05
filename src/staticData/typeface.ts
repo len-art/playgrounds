@@ -107,7 +107,7 @@ const createTextTexture = (text: string) => {
   ctx.font = `${fontSize - 5}px sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle = "#222";
   ctx.fillText(text, canvasSize / 2, canvasSize / 2);
 
   return canvas.toDataURL();

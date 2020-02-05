@@ -15,6 +15,12 @@ import betaRideIcon from "../img/betaRide.svg";
 import groundedIcon from "../img/grounded.svg";
 import triageIcon from "../img/triage.svg";
 import otaIcon from "../img/ota.svg";
+
+import clusterShapeBlue from "../img/clusterShapes/blue.svg";
+import clusterShapeGreen from "../img/clusterShapes/green.svg";
+import clusterShapeOrange from "../img/clusterShapes/orange.svg";
+import clusterShapeRed from "../img/clusterShapes/red.svg";
+
 import { Point } from "mapbox-gl";
 import { Possessions } from "../layers/pins/models";
 
@@ -46,22 +52,26 @@ const possessions: Possessions = {
   FIELD: {
     name: "Field",
     fColor: hexToFloat("#828282"),
-    rgbColor: hexToRgb("#828282")
+    rgbColor: hexToRgb("#828282"),
+    svg: clusterShapeBlue
   },
   RANGER: {
     name: "Ranger",
     fColor: hexToFloat("#0C97FF"),
-    rgbColor: hexToRgb("#0C97FF")
+    rgbColor: hexToRgb("#0C97FF"),
+    svg: clusterShapeGreen
   },
   RIDER: {
     name: "Rider",
     fColor: hexToFloat("#2cbe4e"),
-    rgbColor: hexToRgb("#2cbe4e")
+    rgbColor: hexToRgb("#2cbe4e"),
+    svg: clusterShapeOrange
   },
   MRO: {
     name: "Mro",
     fColor: hexToFloat("#ff5555"),
-    rgbColor: hexToRgb("#ff5555")
+    rgbColor: hexToRgb("#ff5555"),
+    svg: clusterShapeRed
   }
 };
 

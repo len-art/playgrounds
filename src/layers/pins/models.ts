@@ -54,5 +54,6 @@ export interface Possessions {
     name: string;
     fColor: number[];
     rgbColor: number[];
+    svg: string;
   };
 }

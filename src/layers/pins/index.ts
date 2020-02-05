@@ -4,6 +4,7 @@ import { lusolve, divide, flatten } from "mathjs";
 import PinShaders from "./shaders";
 import { PinCluster } from "../../staticData/pins";
 import pinShape from "../../img/pinShape.svg";
+import clusterShape from "../../img/clusterShapes/red.svg";
 
 import data from "../../staticData/pins";
 import { isPointInPolygon } from "../../helpers/mapHelpers";
@@ -21,10 +22,12 @@ import { GlData } from "../commonModels";
 import {
   getDefaultImageSettings,
   createBackgroundTextures,
+  createClusterBackgroundTextures,
   getPinVertices,
   createPinTextureMap,
   createPinShapeTextureMap,
-  createClusterTextureMap
+  createClusterTextureMap,
+  createClusterShapeTextureMap
 } from "./helpers";
 import { create1x1Texture } from "../commonHelpers";
 
@@ -54,6 +57,11 @@ export default class PinLayer {
     buffer: null
   };
   pinShapeTextureMap: Buffer = {
+    bufferLoc: 0,
+    buffer: null
+  };
+
+  clusterShapeTextureMap: Buffer = {
     bufferLoc: 0,
     buffer: null
   };
@@ -157,13 +165,22 @@ export default class PinLayer {
       gl,
       this.pinsGlData.program
     );
+    this.pinShapeTextureMap = createPinShapeTextureMap(
+      gl,
+      this.pinsGlData.program
+    );
+
+    this.clusterShapeTextureMap = createClusterShapeTextureMap(
+      gl,
+      this.clustersGlData.program
+    );
 
     this.pinBackgrounds = createBackgroundTextures(
       gl,
       this.pinsGlData.backgroundBufferLocation,
       data.possessions
     );
-    this.clusterBackgrounds = createBackgroundTextures(
+    this.clusterBackgrounds = createClusterBackgroundTextures(
       gl,
       this.clustersGlData.backgroundBufferLocation,
       data.possessions
@@ -172,10 +189,6 @@ export default class PinLayer {
     this.pinTextures = this.createIconTextures(gl, this.pinTextureLocation);
 
     this.pinTextureMap = createPinTextureMap(gl, this.pinsGlData.program);
-    this.pinShapeTextureMap = createPinShapeTextureMap(
-      gl,
-      this.pinsGlData.program
-    );
 
     this.clusterTextureMap = createClusterTextureMap(
       gl,
@@ -565,7 +578,7 @@ export default class PinLayer {
   };
 
   renderClusters = (gl: WebGLRenderingContext) => {
-    /* pin icon texture map */
+    /* cluster icon texture map */
     gl.bindBuffer(gl.ARRAY_BUFFER, this.clusterTextureMap.buffer);
 
     gl.vertexAttribPointer(
@@ -578,17 +591,30 @@ export default class PinLayer {
     );
     gl.enableVertexAttribArray(this.clusterTextureMap.bufferLoc);
 
+    /* cluster shape texture map */
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.clusterShapeTextureMap.buffer);
+
+    gl.vertexAttribPointer(
+      this.clusterShapeTextureMap.bufferLoc,
+      2,
+      gl.FLOAT,
+      false,
+      0,
+      0
+    );
+    gl.enableVertexAttribArray(this.clusterShapeTextureMap.bufferLoc);
+
     Object.values(this.clusterData).forEach(possession => {
-      /* bg 1x1 texture */
-      gl.activeTexture(gl.TEXTURE0);
+      /* cluster shape  texture */
+      gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, possession.texture.buffer);
-      gl.uniform1i(possession.texture.bufferLoc, 0);
+      gl.uniform1i(possession.texture.bufferLoc, 1);
 
       Object.values(possession.data).forEach(size => {
         /* icon texture */
-        gl.activeTexture(gl.TEXTURE1);
+        gl.activeTexture(gl.TEXTURE2);
         gl.bindTexture(gl.TEXTURE_2D, size.texture.buffer);
-        gl.uniform1i(size.texture.bufferLoc, 1);
+        gl.uniform1i(size.texture.bufferLoc, 2);
 
         size.data.forEach(cluster => {
           /* pin shape */

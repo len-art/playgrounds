@@ -2,6 +2,8 @@ import mapboxgl from "mapbox-gl";
 
 import pinTextureShape from "../../obj/pinTextureShape";
 import pinTextureShapeIcon from "../../obj/pinTextureShapeIcon";
+import clusterTextureShape from "../../obj/clusterTextureShape";
+import clusterTextureShapeIcon from "../../obj/clusterTextureShapeIcon";
 import clusterObjectData from "../../obj/cluster";
 
 import { PinBackgroundTextures, Possessions } from "./models";
@@ -22,11 +24,54 @@ export const createBackgroundTextures = (
   bufferLoc: WebGLUniformLocation | null,
   possessions: Possessions
 ) => {
+  // const def = getDefaultImageSettings(gl);
   return Object.keys(possessions).reduce(
     (acc: PinBackgroundTextures, possessionKey) => {
       const colorValues = possessions[possessionKey].rgbColor;
+      // const svg = possessions[possessionKey].svg;
 
       const buffer = create1x1Texture(gl, [...colorValues, 255]);
+      acc[possessionKey] = { bufferLoc, buffer };
+
+      return acc;
+    },
+    {}
+  );
+};
+
+/* creates background textures for clusters for every possession */
+export const createClusterBackgroundTextures = (
+  gl: WebGLRenderingContext,
+  bufferLoc: WebGLUniformLocation | null,
+  possessions: Possessions
+) => {
+  const def = getDefaultImageSettings(gl);
+  return Object.keys(possessions).reduce(
+    (acc: PinBackgroundTextures, possessionKey) => {
+      const colorValues = possessions[possessionKey].rgbColor;
+      const svg = possessions[possessionKey].svg;
+
+      const buffer = create1x1Texture(gl, [...colorValues, 255]);
+
+      const image = new Image();
+      image.onload = () => {
+        image.width = 256;
+        image.height = 256;
+
+        gl.bindTexture(gl.TEXTURE_2D, buffer);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          def.level,
+          def.internalFormat,
+          def.srcFormat,
+          def.srcType,
+          image
+        );
+        gl.generateMipmap(gl.TEXTURE_2D);
+      };
+      image.onerror = console.error;
+      image.src = svg;
 
       acc[possessionKey] = { bufferLoc, buffer };
 
@@ -54,7 +99,7 @@ export const getPinVertices = (cluster: PinCluster, baseSize: number) => {
   if (cluster.pins.length === 1) {
     model = pinTextureShape.groupedVertices;
   } else {
-    model = clusterObjectData.groupedVertices;
+    model = clusterTextureShape.groupedVertices;
   }
 
   const vertices = model.map(v => {
@@ -104,18 +149,37 @@ export const createPinTextureMap = (
   };
 };
 
-export const createClusterTextureMap = (
+export const createClusterShapeTextureMap = (
   gl: WebGLRenderingContext,
   program: WebGLProgram
 ) => {
   /* creates a texture map for pin icons */
+  const bufferLoc = gl.getAttribLocation(program, "a_clusterShapeIconMap");
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(clusterTextureShape.mesh.textures),
+    gl.STATIC_DRAW
+  );
+  return {
+    bufferLoc,
+    buffer
+  };
+};
+
+export const createClusterTextureMap = (
+  gl: WebGLRenderingContext,
+  program: WebGLProgram
+) => {
+  /* creates a texture map for cluster counters */
   const bufferLoc = gl.getAttribLocation(program, "a_clusterIconMap");
 
   const buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData(
     gl.ARRAY_BUFFER,
-    new Float32Array(clusterObjectData.mesh.textures),
+    new Float32Array(clusterTextureShapeIcon.mesh.textures),
     gl.STATIC_DRAW
   );
   return {
