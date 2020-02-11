@@ -539,6 +539,7 @@ export default class PinLayer {
   render = (gl: WebGLRenderingContext, matrix: number[]) => {
     /* called every frame */
 
+    console.log(matrix);
     /* calculate precise eye coordinates for high precision projection */
     var eyeHigh = this.getEyePosition(matrix) as number[];
     var eyeLow = eyeHigh.map(function(e) {
