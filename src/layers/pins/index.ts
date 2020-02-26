@@ -4,7 +4,6 @@ import { lusolve, divide, flatten } from "mathjs";
 import PinShaders from "./shaders";
 import { PinCluster } from "../../staticData/pins";
 import pinShape from "../../img/pinShape.svg";
-import clusterShape from "../../img/clusterShapes/red.svg";
 
 import data from "../../staticData/pins";
 import { isPointInPolygon } from "../../helpers/mapHelpers";
@@ -24,12 +23,11 @@ import {
   createBackgroundTextures,
   createClusterBackgroundTextures,
   getPinVertices,
-  createPinTextureMap,
-  createPinShapeTextureMap,
-  createClusterTextureMap,
-  createClusterShapeTextureMap
+  createShapeTextureMap
 } from "./helpers";
 import { create1x1Texture } from "../commonHelpers";
+import textureMappedSquare from "../../obj/textureMappedSquare";
+import textureMappedSquareIcon from "../../obj/textureMappedSquareIcon";
 
 export default class PinLayer {
   map?: mapboxgl.Map;
@@ -52,17 +50,26 @@ export default class PinLayer {
     backgroundBufferLocation: null
   };
 
-  pinShapeTexture: Texture = {
-    bufferLoc: null,
+  squareShapeTextureMap: Buffer = {
+    bufferLoc: 0,
     buffer: null
   };
-  pinShapeTextureMap: Buffer = {
+  squareIconTextureMap: Buffer = {
     bufferLoc: 0,
     buffer: null
   };
 
-  clusterShapeTextureMap: Buffer = {
+  squareShapeTextureMapPins: Buffer = {
     bufferLoc: 0,
+    buffer: null
+  };
+  squareIconTextureMapPins: Buffer = {
+    bufferLoc: 0,
+    buffer: null
+  };
+
+  pinShapeTexture: Texture = {
+    bufferLoc: null,
     buffer: null
   };
 
@@ -72,16 +79,6 @@ export default class PinLayer {
 
   pinTextureLocation: WebGLUniformLocation | null = null;
   pinTextures: PinIconTextures = {};
-
-  pinTextureMap: Buffer = {
-    bufferLoc: 0,
-    buffer: null
-  };
-
-  clusterTextureMap: Buffer = {
-    bufferLoc: 0,
-    buffer: null
-  };
 
   pinData: RenderablePins = {};
   clusterData: RenderableClusters = {};
@@ -161,18 +158,35 @@ export default class PinLayer {
       this.pinsGlData.program
     );
 
+    this.squareShapeTextureMap = createShapeTextureMap(
+      gl,
+      this.clustersGlData.program,
+      "a_squareShapeTextureMap",
+      textureMappedSquare.mesh
+    );
+    this.squareIconTextureMap = createShapeTextureMap(
+      gl,
+      this.clustersGlData.program,
+      "a_squareIconTextureMap",
+      textureMappedSquareIcon.mesh
+    );
+
+    this.squareShapeTextureMapPins = createShapeTextureMap(
+      gl,
+      this.pinsGlData.program,
+      "a_squareShapeTextureMap",
+      textureMappedSquare.mesh
+    );
+    this.squareIconTextureMapPins = createShapeTextureMap(
+      gl,
+      this.pinsGlData.program,
+      "a_squareIconTextureMap",
+      textureMappedSquareIcon.mesh
+    );
+
     this.pinShapeTexture = this.createPinShapeTexture(
       gl,
       this.pinsGlData.program
-    );
-    this.pinShapeTextureMap = createPinShapeTextureMap(
-      gl,
-      this.pinsGlData.program
-    );
-
-    this.clusterShapeTextureMap = createClusterShapeTextureMap(
-      gl,
-      this.clustersGlData.program
     );
 
     this.pinBackgrounds = createBackgroundTextures(
@@ -187,13 +201,6 @@ export default class PinLayer {
     );
 
     this.pinTextures = this.createIconTextures(gl, this.pinTextureLocation);
-
-    this.pinTextureMap = createPinTextureMap(gl, this.pinsGlData.program);
-
-    this.clusterTextureMap = createClusterTextureMap(
-      gl,
-      this.clustersGlData.program
-    );
 
     const allPinData = this.createPinData(
       gl,
@@ -536,10 +543,8 @@ export default class PinLayer {
     return flatten(eye);
   };
 
+  /* called every frame */
   render = (gl: WebGLRenderingContext, matrix: number[]) => {
-    /* called every frame */
-
-    console.log(matrix);
     /* calculate precise eye coordinates for high precision projection */
     var eyeHigh = this.getEyePosition(matrix) as number[];
     var eyeLow = eyeHigh.map(function(e) {
@@ -580,30 +585,30 @@ export default class PinLayer {
 
   renderClusters = (gl: WebGLRenderingContext) => {
     /* cluster icon texture map */
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.clusterTextureMap.buffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.squareShapeTextureMap.buffer);
 
     gl.vertexAttribPointer(
-      this.clusterTextureMap.bufferLoc,
+      this.squareShapeTextureMap.bufferLoc,
       2,
       gl.FLOAT,
       false,
       0,
       0
     );
-    gl.enableVertexAttribArray(this.clusterTextureMap.bufferLoc);
+    gl.enableVertexAttribArray(this.squareShapeTextureMap.bufferLoc);
 
     /* cluster shape texture map */
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.clusterShapeTextureMap.buffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.squareIconTextureMap.buffer);
 
     gl.vertexAttribPointer(
-      this.clusterShapeTextureMap.bufferLoc,
+      this.squareIconTextureMap.bufferLoc,
       2,
       gl.FLOAT,
       false,
       0,
       0
     );
-    gl.enableVertexAttribArray(this.clusterShapeTextureMap.bufferLoc);
+    gl.enableVertexAttribArray(this.squareIconTextureMap.bufferLoc);
 
     Object.values(this.clusterData).forEach(possession => {
       /* cluster shape  texture */
@@ -638,31 +643,31 @@ export default class PinLayer {
   };
 
   renderPins = (gl: WebGLRenderingContext) => {
-    /* pin icon texture map */
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.pinTextureMap.buffer);
+    /* cluster icon texture map */
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.squareShapeTextureMapPins.buffer);
 
     gl.vertexAttribPointer(
-      this.pinTextureMap.bufferLoc,
+      this.squareShapeTextureMapPins.bufferLoc,
       2,
       gl.FLOAT,
       false,
       0,
       0
     );
-    gl.enableVertexAttribArray(this.pinTextureMap.bufferLoc);
+    gl.enableVertexAttribArray(this.squareShapeTextureMapPins.bufferLoc);
 
-    /* pin shape texture map */
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.pinShapeTextureMap.buffer);
+    /* cluster shape texture map */
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.squareIconTextureMapPins.buffer);
 
     gl.vertexAttribPointer(
-      this.pinShapeTextureMap.bufferLoc,
+      this.squareIconTextureMapPins.bufferLoc,
       2,
       gl.FLOAT,
       false,
       0,
       0
     );
-    gl.enableVertexAttribArray(this.pinShapeTextureMap.bufferLoc);
+    gl.enableVertexAttribArray(this.squareIconTextureMapPins.bufferLoc);
 
     /* pin shape texture */
     gl.activeTexture(gl.TEXTURE0);

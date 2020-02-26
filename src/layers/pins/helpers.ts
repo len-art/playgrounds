@@ -1,10 +1,6 @@
 import mapboxgl from "mapbox-gl";
 
-import pinTextureShape from "../../obj/pinTextureShape";
-import pinTextureShapeIcon from "../../obj/pinTextureShapeIcon";
-import clusterTextureShape from "../../obj/clusterTextureShape";
-import clusterTextureShapeIcon from "../../obj/clusterTextureShapeIcon";
-import clusterObjectData from "../../obj/cluster";
+import textureMappedSquare from "../../obj/textureMappedSquare";
 
 import { PinBackgroundTextures, Possessions } from "./models";
 import { PinCluster } from "../../staticData/pins";
@@ -95,14 +91,7 @@ export const getPinVertices = (cluster: PinCluster, baseSize: number) => {
 
   const c = [loc.x, loc.y - r];
 
-  let model;
-  if (cluster.pins.length === 1) {
-    model = pinTextureShape.groupedVertices;
-  } else {
-    model = clusterTextureShape.groupedVertices;
-  }
-
-  const vertices = model.map(v => {
+  const vertices = textureMappedSquare.groupedVertices.map(v => {
     const x = c[0] + r * v[0];
     const y = c[1] + r * v[1];
     return [x, y, x - Math.fround(x), y - Math.fround(y)];
@@ -111,75 +100,19 @@ export const getPinVertices = (cluster: PinCluster, baseSize: number) => {
   return vertices;
 };
 
-export const createPinShapeTextureMap = (
+export const createShapeTextureMap = (
   gl: WebGLRenderingContext,
-  program: WebGLProgram
+  program: WebGLProgram,
+  attributeName: string,
+  mesh: any
 ) => {
-  /* creates a texture map for pin icons */
-  const bufferLoc = gl.getAttribLocation(program, "a_pinShapeIconMap");
+  /* creates a texture map with provided attribute variable name and mesh */
+  const bufferLoc = gl.getAttribLocation(program, attributeName);
   const buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData(
     gl.ARRAY_BUFFER,
-    new Float32Array(pinTextureShape.mesh.textures),
-    gl.STATIC_DRAW
-  );
-  return {
-    bufferLoc,
-    buffer
-  };
-};
-
-export const createPinTextureMap = (
-  gl: WebGLRenderingContext,
-  program: WebGLProgram
-) => {
-  /* creates a texture map for pin icons */
-  const bufferLoc = gl.getAttribLocation(program, "a_pinIconMap");
-  const buffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array(pinTextureShapeIcon.mesh.textures),
-    gl.STATIC_DRAW
-  );
-  return {
-    bufferLoc,
-    buffer
-  };
-};
-
-export const createClusterShapeTextureMap = (
-  gl: WebGLRenderingContext,
-  program: WebGLProgram
-) => {
-  /* creates a texture map for pin icons */
-  const bufferLoc = gl.getAttribLocation(program, "a_clusterShapeIconMap");
-  const buffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array(clusterTextureShape.mesh.textures),
-    gl.STATIC_DRAW
-  );
-  return {
-    bufferLoc,
-    buffer
-  };
-};
-
-export const createClusterTextureMap = (
-  gl: WebGLRenderingContext,
-  program: WebGLProgram
-) => {
-  /* creates a texture map for cluster counters */
-  const bufferLoc = gl.getAttribLocation(program, "a_clusterIconMap");
-
-  const buffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array(clusterTextureShapeIcon.mesh.textures),
+    new Float32Array(mesh.textures),
     gl.STATIC_DRAW
   );
   return {

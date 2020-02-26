@@ -6,7 +6,6 @@ import "./App.css";
 
 import PinLayer from "./layers/pins";
 import data, { ProjectedPin } from "./staticData/pins";
-import typeface from "./staticData/typeface";
 import clusterPins from "./helpers/clusterPins";
 import PinPopup from "./PinPopup";
 import marketBorders from "./staticData/marketBorders.json";
